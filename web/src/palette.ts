@@ -1,7 +1,7 @@
 // Brand palettes from docs/brand.md. Preview branches change only the next line.
 export type PaletteName = 'neon-pulse' | 'ultraviolet' | 'cobalt-chalk'
 
-export const DEFAULT_PALETTE: PaletteName = 'neon-pulse';
+export const DEFAULT_PALETTE: PaletteName = 'ultraviolet';
 
 export type PaletteTokens = {
   bg: string
