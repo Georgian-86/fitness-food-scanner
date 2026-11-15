@@ -1,289 +1,257 @@
-// SVG parts for Chana, drawn in a 200 x 200 viewBox.
-// Each part is a small component so moods swap expressions and props while the
-// silhouette (body, band, feet) stays identical.
-import { AnimatePresence, motion, type Transition } from 'motion/react'
-import { C } from './colors.ts'
-import type { ArmPose, BrowPose, HandKind, MoodPose, MouthKind, PropKind } from './moods.ts'
-
+// SVG parts for Chana, drawn in a 200 x 200 viewBox, neobrutalist:
+// flat fills, one ink outline width (LINE) everywhere, a hard offset shadow.
+// Parts read MotionValues from the director (useMoodMotion), so React renders
+// never restart an animation.
+import { AnimatePresence, motion, type MotionValue, type Transition } from 'motion/react'
+import type { CSSProperties, ReactNode } from 'react'
+import { C, LINE, T } from './colors.ts'
+import type { EyeKind, HandKind, MouthKind, PropKind } from './moods.ts'
+import type { ArmValues, ChanaMotion } from './useMoodMotion.ts'
 
 /**
- * Rotation pivot for a motion <g>. Motion rotates SVG around the centre of the
- * element's fill-box, so a large invisible circle centred on the pivot makes the
- * box centre equal the pivot, whatever the parent transforms are. Nested pivots
- * need strictly smaller radii so an outer pad always contains the inner ones.
+ * Rotation pivot for a motion <g>. Motion rotates and scales SVG around the
+ * centre of the element's fill-box, so a large invisible circle centred on the
+ * pivot makes the box centre equal the pivot whatever the parent transforms
+ * are. Nested pivots need strictly smaller radii (inner pad inside outer pad).
  */
 export function Pivot({ x, y, r }: { x: number; y: number; r: number }) {
   return <circle cx={x} cy={y} r={r} fill="none" pointerEvents="none" />
 }
 
-const fade = {
-  initial: { opacity: 0 },
-  animate: { opacity: 1 },
-  exit: { opacity: 0 },
-}
-
 export interface Ctx {
   reduced: boolean
   accent: string
-  accentDark: string
-  accent2: string
   uid: string
-  spring: Transition
-  fadeT: Transition
+  /** Cross-fade for expressions and props: 200 ms, or instant with reduced motion. */
+  fade: Transition
 }
 
-function loopT(ctx: Ctx, duration: number, extra?: Partial<Transition>): Transition {
-  return ctx.reduced ? { duration: 0 } : { duration, repeat: Infinity, ease: 'easeInOut', ...extra }
+const fill = (f: string): CSSProperties => ({ fill: f })
+const inked = (f: string, w = LINE): CSSProperties => ({ fill: f, stroke: T.ink, strokeWidth: w, strokeLinejoin: 'round' })
+const loopT = (ctx: Ctx, duration: number, extra?: Transition): Transition =>
+  ctx.reduced ? { duration: 0 } : { duration, repeat: Infinity, ease: 'easeInOut', ...extra }
+
+function Fade({ show, ctx, children }: { show: boolean; ctx: Ctx; children: ReactNode }) {
+  return (
+    <motion.g initial={false} animate={{ opacity: show ? 1 : 0 }} transition={ctx.fade}>
+      {children}
+    </motion.g>
+  )
 }
 
 /* ------------------------------------------------------------------ body */
 
 export const BODY_PATH =
   'M104 46 C110 52 116 56 124 59 C150 68 166 92 166 120 C166 154 138 178 100 178 C62 178 34 154 34 120 C34 90 54 66 84 59 C94 57 100 53 104 46 Z'
+const FEET = [
+  { cx: 79, cy: 180 },
+  { cx: 121, cy: 180 },
+]
+const KNOT = { x: 148, y: 72 }
 
-export function Body({ ctx }: { ctx: Ctx }) {
-  const g = `chana-body-${ctx.uid}`
-  const clip = `chana-clip-${ctx.uid}`
+/** Hard shadow, band tails and feet: everything behind the body. */
+export function BodyBack({ m, ctx }: { m: ChanaMotion; ctx: Ctx }) {
+  return (
+    <>
+      <g transform="translate(8 8)" style={inked(T.ink)}>
+        {FEET.map((f) => (
+          <ellipse key={f.cx} cx={f.cx} cy={f.cy} rx={15} ry={8.5} />
+        ))}
+        <path d={BODY_PATH} />
+      </g>
+      <motion.g style={{ rotate: m.tail }}>
+        <Pivot x={KNOT.x} y={KNOT.y} r={600} />
+        <g style={inked(ctx.accent, LINE - 0.5)}>
+          <path d="M147 66 Q165 54 183 60 Q171 68 149 76 Z" />
+          <path d="M147 74 Q165 78 175 94 Q159 90 145 80 Z" />
+        </g>
+      </motion.g>
+      <g style={inked(C.body)}>
+        {FEET.map((f) => (
+          <ellipse key={f.cx} cx={f.cx} cy={f.cy} rx={15} ry={8.5} />
+        ))}
+      </g>
+    </>
+  )
+}
+
+/** Body fill, one flat shade, sweatband, crease, outline and knot. */
+export function BodyFront({ ctx }: { ctx: Ctx }) {
+  const clip = `chana-body-${ctx.uid}`
   return (
     <>
       <defs>
-        <radialGradient id={g} cx="38%" cy="34%" r="72%">
-          <stop offset="0" stopColor={C.hilite} />
-          <stop offset="0.5" stopColor={C.body} />
-          <stop offset="1" stopColor={C.shade} />
-        </radialGradient>
         <clipPath id={clip}>
           <path d={BODY_PATH} />
         </clipPath>
       </defs>
-      {/* feet, behind the body */}
-      <g fill={C.shade} stroke={C.outline} strokeWidth={3}>
-        <ellipse cx={78} cy={178} rx={14} ry={8} />
-        <ellipse cx={122} cy={178} rx={14} ry={8} />
-      </g>
-      {/* band tails, behind the body */}
-      <g style={{ fill: ctx.accent, stroke: ctx.accentDark }} strokeWidth={2.5} strokeLinejoin="round">
-        <path d="M150 74 Q166 64 180 70 Q170 76 152 82 Z" />
-        <path d="M150 80 Q166 84 174 98 Q160 94 149 86 Z" />
-      </g>
-      <path d={BODY_PATH} fill={`url(#${g})`} stroke={C.outline} strokeWidth={3} strokeLinejoin="round" />
+      <path d={BODY_PATH} style={fill(C.shade)} />
       <g clipPath={`url(#${clip})`}>
-        {/* rim shade along the lower right */}
-        <path d="M166 112 C164 152 136 178 100 180 L180 190 L180 100 Z" fill={C.shade} opacity={0.35} />
-        {/* sweatband */}
-        <path d="M20 62 Q100 82 180 62 L180 78 Q100 98 20 78 Z" style={{ fill: ctx.accent }} />
-        <path d="M20 62 Q100 82 180 62" fill="none" style={{ stroke: ctx.accentDark }} strokeWidth={2.5} />
-        <path d="M20 78 Q100 98 180 78" fill="none" style={{ stroke: ctx.accentDark }} strokeWidth={2.5} />
-        <path d="M20 70 Q100 90 180 70" fill="none" stroke="#FFFFFF" strokeOpacity={0.35} strokeWidth={1.6} strokeDasharray="2 4" />
+        {/* the lit part: the body shifted up-left, leaving a flat crescent of shade */}
+        <path d={BODY_PATH} transform="translate(-10 -9)" style={fill(C.body)} />
+        <path d="M14 55 Q100 77 186 55 L186 72 Q100 94 14 72 Z" style={inked(ctx.accent)} />
       </g>
-      {/* tip crease and shine */}
-      <path d="M104 48 Q100 58 92 63" fill="none" stroke={C.shade} strokeWidth={2.2} strokeLinecap="round" />
-      <ellipse cx={58} cy={104} rx={7} ry={4.5} transform="rotate(-50 58 104)" fill="#FFF8E6" opacity={0.7} />
-      {/* band knot, over the body edge */}
-      <circle cx={148} cy={79} r={5.5} style={{ fill: ctx.accent, stroke: ctx.accentDark }} strokeWidth={2.5} />
+      {/* chickpea tip crease */}
+      <path d="M104 49 Q101 57 93 61" fill="none" style={{ stroke: C.face, strokeWidth: 3.5, strokeLinecap: 'round' }} />
+      <g style={fill(C.blush)}>
+        <ellipse cx={62} cy={132} rx={8} ry={4.5} />
+        <ellipse cx={138} cy={132} rx={8} ry={4.5} />
+      </g>
+      <path data-part="body-outline" d={BODY_PATH} fill="none" style={{ stroke: T.ink, strokeWidth: LINE, strokeLinejoin: 'round' }} />
+      <circle cx={KNOT.x} cy={KNOT.y} r={6.5} style={inked(ctx.accent, LINE - 0.5)} />
     </>
   )
 }
 
 /* ------------------------------------------------------------------ face */
 
-export function Eye({ cx, cy, pose, ctx, id }: { cx: number; cy: number; pose: MoodPose['eyes']; ctx: Ctx; id: string }) {
-  const clip = `chana-eye-${id}-${ctx.uid}`
-  const xAnim = !ctx.reduced && pose.track ? pose.track.map((t) => pose.dx + t) : pose.dx
-  const xT: Transition = !ctx.reduced && pose.track ? loopT(ctx, 2.2) : ctx.spring
-  const lidAnim = !ctx.reduced && pose.blink ? [pose.lid, pose.lid, 1, pose.lid] : pose.lid
-  const lidT: Transition =
-    !ctx.reduced && pose.blink
-      ? { duration: 4.2, times: [0, 0.9, 0.94, 1], repeat: Infinity, ease: 'easeInOut' }
-      : ctx.reduced
-        ? { duration: 0 }
-        : { type: 'spring', stiffness: 300, damping: 26 }
+const EYES = [80, 120]
+const EYE_Y = 113
+const EYE = { rx: 9.5, ry: 12.5 }
+
+export function Face({ m, ctx, eyes, mouth }: { m: ChanaMotion; ctx: Ctx; eyes: EyeKind; mouth: MouthKind }) {
+  const clip = `chana-eyes-${ctx.uid}`
+  const v = m.v
   return (
-    <g transform={`translate(${cx} ${cy})`}>
-      <motion.g animate={{ x: xAnim, y: pose.dy }} transition={{ x: xT, y: ctx.spring }}>
-        <AnimatePresence>
-          {pose.kind === 'open' && (
-            <motion.g key="open" {...fade} transition={ctx.fadeT}>
-              <defs>
-                <clipPath id={clip}>
-                  <ellipse rx={10.5} ry={12.5} />
-                </clipPath>
-              </defs>
-              <ellipse rx={10.5} ry={12.5} fill={C.ink} />
-              <ellipse cx={0} cy={6.5} rx={6} ry={3.4} fill="#6A4428" opacity={0.75} />
-              <circle cx={-3.6} cy={-5} r={3.9} fill="#FFFFFF" />
-              <circle cx={3.6} cy={4.2} r={1.7} fill="#FFFFFF" opacity={0.9} />
-              <g clipPath={`url(#${clip})`}>
-                <motion.rect
-                  x={-14}
-                  y={-13.5}
-                  width={28}
-                  height={27}
-                  fill={C.body}
-                  stroke={C.outline}
-                  strokeWidth={2.4}
-                  vectorEffect="non-scaling-stroke"
-                  style={{ originY: 0 }}
-                  initial={{ scaleY: pose.lid }}
-                  animate={{ scaleY: lidAnim }}
-                  transition={lidT}
-                />
-              </g>
+    <motion.g style={{ x: m.faceX, y: m.faceY }}>
+      <motion.g style={{ x: m.eyeX, y: m.eyeY }}>
+        <Fade show={eyes === 'open'} ctx={ctx}>
+          <defs>
+            <clipPath id={clip}>
+              {EYES.map((x) => (
+                <ellipse key={x} cx={x} cy={EYE_Y} rx={EYE.rx + 0.5} ry={EYE.ry + 0.5} />
+              ))}
+            </clipPath>
+          </defs>
+          {EYES.map((x) => (
+            <g key={x}>
+              <ellipse cx={x} cy={EYE_Y} rx={EYE.rx} ry={EYE.ry} style={fill(C.face)} />
+              <rect x={x - 6} y={EYE_Y - 8.5} width={5.5} height={5.5} rx={1.4} style={fill(C.catchlight)} />
+            </g>
+          ))}
+          <g clipPath={`url(#${clip})`}>
+            <motion.g style={{ y: m.lidY }}>
+              {EYES.map((x) => (
+                <g key={x}>
+                  <rect x={x - 12} y={EYE_Y - EYE.ry - 30} width={24} height={30} style={fill(C.body)} />
+                  <path d={`M${x - 12} ${EYE_Y - EYE.ry} H${x + 12}`} style={{ stroke: C.face, strokeWidth: 4 }} />
+                </g>
+              ))}
             </motion.g>
-          )}
-          {pose.kind === 'arc' && (
-            <motion.path
-              key="arc"
-              {...fade}
-              transition={ctx.fadeT}
-              d="M-9.5 4 Q0 -10 9.5 4"
-              fill="none"
-              stroke={C.ink}
-              strokeWidth={4.6}
-              strokeLinecap="round"
-            />
-          )}
-          {pose.kind === 'closed' && (
-            <motion.path
-              key="closed"
-              {...fade}
-              transition={ctx.fadeT}
-              d="M-9.5 -1 Q0 7 9.5 -1"
-              fill="none"
-              stroke={C.ink}
-              strokeWidth={4}
-              strokeLinecap="round"
-            />
-          )}
-        </AnimatePresence>
+          </g>
+        </Fade>
+        <Fade show={eyes === 'arc'} ctx={ctx}>
+          {EYES.map((x) => (
+            <path key={x} d={`M${x - 9} ${EYE_Y + 4} L${x} ${EYE_Y - 6} L${x + 9} ${EYE_Y + 4}`} fill="none" style={faceLine(5.5)} />
+          ))}
+        </Fade>
+        <Fade show={eyes === 'closed'} ctx={ctx}>
+          {EYES.map((x) => (
+            <path key={x} d={`M${x - 9} ${EYE_Y} Q${x} ${EYE_Y + 8} ${x + 9} ${EYE_Y}`} fill="none" style={faceLine(5)} />
+          ))}
+        </Fade>
       </motion.g>
-    </g>
+      <Brow cx={80} y={v.bLy} r={v.bLr} />
+      <Brow cx={120} y={v.bRy} r={v.bRr} />
+      <AnimatePresence initial={false}>
+        <motion.g key={mouth} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={ctx.fade}>
+          {mouthShape(mouth)}
+        </motion.g>
+      </AnimatePresence>
+    </motion.g>
   )
 }
 
-export function Brow({ cx, pose, ctx }: { cx: number; pose: BrowPose; ctx: Ctx }) {
+const faceLine = (w: number): CSSProperties => ({ stroke: C.face, strokeWidth: w, strokeLinecap: 'round', strokeLinejoin: 'round' })
+
+function Brow({ cx, y, r }: { cx: number; y: MotionValue<number>; r: MotionValue<number> }) {
   return (
-    <g transform={`translate(${cx} 94)`}>
-      <motion.path
-        d="M-7.5 1.5 Q0 -3 7.5 1.5"
-        fill="none"
-        stroke={C.brow}
-        strokeWidth={3.4}
-        strokeLinecap="round"
-        initial={false}
-        animate={{ y: pose.dy, rotate: pose.rot }}
-        transition={ctx.spring}
-      />
-    </g>
+    <motion.g style={{ y, rotate: r }}>
+      <Pivot x={cx} y={93} r={400} />
+      <path d={`M${cx - 8} 93 H${cx + 8}`} style={faceLine(5.5)} />
+    </motion.g>
   )
 }
 
 function mouthShape(kind: MouthKind) {
-  const line = { fill: 'none', stroke: C.ink, strokeWidth: 3.2, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
-  const open = { fill: C.mouthIn, stroke: C.ink, strokeWidth: 2.6, strokeLinejoin: 'round' as const }
+  const line = { fill: 'none', ...faceLine(5) }
+  const solid = { fill: C.face, stroke: C.face, strokeWidth: 4, strokeLinejoin: 'round' as const }
   switch (kind) {
-    case 'smile':
-      return <path d="M92 133 Q100 141 108 133" {...line} />
+    case 'smirk':
+      return <path d="M90 132 Q101 143 111 129" style={line} />
     case 'focus':
       return (
         <>
-          <ellipse cx={104.5} cy={137.5} rx={3.4} ry={3} fill={C.tongue} stroke={C.ink} strokeWidth={1.8} />
-          <path d="M93 134 Q100 139.5 107 134" {...line} />
+          <path d="M101 136 Q101 145 106 145 Q111 145 110 136 Z" style={{ fill: C.tongue, stroke: C.face, strokeWidth: 3, strokeLinejoin: 'round' }} />
+          <path d="M91 134 Q100 140 112 134" style={line} />
         </>
       )
     case 'think':
-      return <path d="M96 137 Q102 134.5 107 136.5" {...line} />
+      return <path d="M95 137 Q102 133 108 136" style={line} />
     case 'open':
       return (
         <>
-          <path d="M88.5 131 Q100 133 111.5 131 Q110.5 147 100 147 Q89.5 147 88.5 131 Z" {...open} />
-          <path d="M94 143.4 Q100 139 106 143.4 Q103 146 100 146 Q97 146 94 143.4 Z" fill={C.tongue} />
+          <path d="M88 130 H112 Q112 148 100 148 Q88 148 88 130 Z" style={solid} />
+          <path d="M93 143.5 Q100 137.5 107 143.5 Q104 146.5 100 146.5 Q96 146.5 93 143.5 Z" style={fill(C.tongue)} />
         </>
       )
     case 'neutral':
-      return <path d="M93 135.5 Q100 138.5 107.5 134" {...line} />
+      return <path d="M92 136 Q100 139.5 108 135" style={line} />
     case 'hmm':
-      return <path d="M91.5 136 Q95.5 132.5 100 136 Q104.5 139.5 108.5 135" {...line} />
+      return <path d="M90 137 Q95 132 100 136 Q105 140 110 134" style={line} />
     case 'calm':
-      return <path d="M93 135 Q100 137.6 107 135" {...line} />
+      return <path d="M92 135.5 Q100 139 108 135.5" style={line} />
     case 'grin':
       return (
         <>
-          <path d="M85.5 129.5 Q100 132 114.5 129.5 Q113.5 150 100 150 Q86.5 150 85.5 129.5 Z" {...open} />
-          <path d="M92.5 145.6 Q100 140 107.5 145.6 Q104 149 100 149 Q96 149 92.5 145.6 Z" fill={C.tongue} />
+          <path d="M85 128 H115 Q115 151 100 151 Q85 151 85 128 Z" style={solid} />
+          <rect x={89} y={130} width={22} height={4.5} rx={1} style={fill(C.catchlight)} />
+          <path d="M92 146 Q100 139.5 108 146 Q104 149.5 100 149.5 Q96 149.5 92 146 Z" style={fill(C.tongue)} />
         </>
       )
     case 'o':
-      return <ellipse cx={100} cy={137} rx={3.6} ry={4.4} {...open} />
+      return <ellipse cx={100} cy={137} rx={3.5} ry={4.5} style={solid} />
     case 'hopeful':
-      return (
-        <>
-          <path d="M93.5 132.5 Q100 134 106.5 132.5 Q105.5 141.5 100 141.5 Q94.5 141.5 93.5 132.5 Z" {...open} />
-        </>
-      )
+      return <path d="M93 132 H107 Q107 142 100 142 Q93 142 93 132 Z" style={solid} />
   }
-}
-
-export function Mouth({ kind, ctx }: { kind: MouthKind; ctx: Ctx }) {
-  return (
-    <AnimatePresence>
-      <motion.g key={kind} {...fade} transition={ctx.fadeT}>
-        {mouthShape(kind)}
-      </motion.g>
-    </AnimatePresence>
-  )
 }
 
 /* ------------------------------------------------------------------ arms */
 
-const UPPER = { x: -7.5, y: -6, width: 15, height: 21, rx: 7.5 }
-const FORE = { x: -7, y: 10, width: 14, height: 19, rx: 7 }
+const UPPER = { x: -7, y: -4, width: 14, height: 21, rx: 7 }
+const FORE = { x: -6.5, y: 10, width: 13, height: 20, rx: 6.5 }
+const ELBOW = 14
+const WRIST = 29
 
-function HandShape({ kind, pass, mirror }: { kind: HandKind; pass: 'outline' | 'fill'; mirror: boolean }) {
-  const paint =
-    pass === 'outline'
-      ? { fill: C.outline, stroke: C.outline, strokeWidth: 6, strokeLinejoin: 'round' as const }
-      : { fill: C.body }
+type Pass = 'outline' | 'fill'
+const passPaint = (pass: Pass): CSSProperties =>
+  pass === 'outline' ? { fill: T.ink, stroke: T.ink, strokeWidth: LINE * 2, strokeLinejoin: 'round' } : fill(C.body)
+
+function HandShape({ kind, pass, mirror }: { kind: 'fist' | 'palm'; pass: Pass; mirror: boolean }) {
+  const paint = passPaint(pass)
   if (kind === 'palm') {
     return (
       <g transform={mirror ? 'scale(-1 1)' : undefined}>
-        <rect x={-7.5} y={-11} width={15} height={18} rx={6.5} {...paint} />
-        <ellipse cx={7.6} cy={1.5} rx={4} ry={3.2} transform="rotate(30 7.6 1.5)" {...paint} />
-        {pass === 'fill' && (
-          <g stroke={C.shade} strokeWidth={1.6} strokeLinecap="round">
-            <path d="M-2.5 -9 V-4" />
-            <path d="M2.5 -9 V-4" />
-          </g>
-        )}
+        <rect x={-9} y={-16} width={18} height={23} rx={7} style={paint} />
+        <ellipse cx={9} cy={0} rx={4.6} ry={3.4} transform="rotate(35 9 0)" style={paint} />
+        {pass === 'fill' && <path d="M-3.5 -13 V-6 M0.5 -13.5 V-6 M4.5 -13 V-6" style={{ stroke: C.shade, strokeWidth: 2, strokeLinecap: 'round' }} />}
       </g>
     )
   }
-  return <circle r={8.8} {...paint} />
+  return <circle r={8.5} style={paint} />
 }
 
-function Scanner({ ctx }: { ctx: Ctx }) {
-  const beam = `chana-beam-${ctx.uid}`
+function Scanner({ beam, ctx }: { beam: MotionValue<number>; ctx: Ctx }) {
   return (
     <g>
-      <defs>
-        <linearGradient id={beam} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" style={{ stopColor: ctx.accent2 }} stopOpacity={0.85} />
-          <stop offset="1" style={{ stopColor: ctx.accent2 }} stopOpacity={0} />
-        </linearGradient>
-      </defs>
-      <motion.g
-        
-       
-        animate={{ rotate: ctx.reduced ? 0 : [-16, 16, -16] }}
-        transition={loopT(ctx, 2.2)}
-      >
-<Pivot x={0} y={16} r={90} />
-        <path d="M-5 16 L5 16 L20 52 L-20 52 Z" fill={`url(#${beam})`} />
-        <path d="M-19 51 H19" style={{ stroke: ctx.accent2 }} strokeWidth={2.4} strokeLinecap="round" opacity={0.9} />
+      <motion.g style={{ rotate: beam }}>
+        <Pivot x={0} y={16} r={120} />
+        <path d="M-5 16 L5 16 L21 54 L-21 54 Z" style={{ fill: T.c3, opacity: 0.7 }} />
+        <path d="M-21 54 H21" style={{ stroke: T.ink, strokeWidth: 3.5, strokeLinecap: 'round' }} />
       </motion.g>
-      <rect x={-9} y={-18} width={18} height={34} rx={5} fill={C.gadget} stroke={C.gadgetRim} strokeWidth={1.8} />
-      <rect x={-9} y={-9} width={18} height={4} style={{ fill: ctx.accent }} />
-      <rect x={-6} y={11} width={12} height={4} rx={1.5} style={{ fill: ctx.accent2 }} />
+      <rect x={-10} y={-19} width={20} height={36} rx={4} style={inked(T.c2, LINE - 1)} />
+      <rect x={-6} y={-13} width={12} height={9} rx={1.5} style={inked(T.c3, 2.5)} />
+      <rect x={-5} y={9} width={10} height={4} rx={1} style={fill(ctx.accent)} />
     </g>
   )
 }
@@ -291,100 +259,94 @@ function Scanner({ ctx }: { ctx: Ctx }) {
 function Camera({ ctx }: { ctx: Ctx }) {
   return (
     <g>
-      <rect x={-11} y={-30} width={8} height={5} rx={1.5} fill={C.gadget} stroke={C.gadgetRim} strokeWidth={1.5} />
-      <rect x={-16} y={-27} width={32} height={22} rx={5} fill={C.gadget} stroke={C.gadgetRim} strokeWidth={1.8} />
-      <circle cx={0} cy={-16} r={7.5} fill="#15151C" stroke={C.gadgetRim} strokeWidth={1.8} />
-      <circle cx={0} cy={-16} r={3.6} style={{ fill: ctx.accent2 }} opacity={0.55} />
-      <circle cx={-2.4} cy={-18.4} r={1.8} fill="#FFFFFF" />
-      <circle cx={11} cy={-23} r={2} style={{ fill: ctx.accent }} />
+      <rect x={-10} y={-32} width={9} height={6} rx={1.5} style={inked(T.c2, LINE - 1.5)} />
+      <rect x={-17} y={-28} width={34} height={23} rx={4} style={inked(T.c2, LINE - 1)} />
+      <circle cx={0} cy={-16.5} r={7.5} style={inked(T.c3, LINE - 1.5)} />
+      <rect x={-3.4} y={-20} width={3.2} height={3.2} rx={0.8} style={fill(C.catchlight)} />
+      <circle cx={11.5} cy={-23.5} r={2.2} style={fill(ctx.accent)} />
     </g>
   )
 }
 
-export function Arm({ side, pose, pass, ctx }: { side: 'L' | 'R'; pose: ArmPose; pass: 'outline' | 'fill'; ctx: Ctx }) {
-  const sx = side === 'L' ? 44 : 156
-  const sy = 142
-  const h = pose.h ?? -(pose.s + pose.e)
-  const paint =
-    pass === 'outline'
-      ? { fill: C.outline, stroke: C.outline, strokeWidth: 6 }
-      : { fill: C.body }
-  const loopAnim = !ctx.reduced && pose.loop ? pose.loop : 0
-  const loopTr: Transition = !ctx.reduced && pose.loop ? loopT(ctx, pose.loopDur ?? 2) : ctx.spring
-  const showProp = pass === 'outline' && (pose.hand === 'scanner' || pose.hand === 'camera')
-  const handKind: HandKind = pose.hand === 'palm' ? 'palm' : 'fist'
+export function Arm({
+  side,
+  a,
+  hand,
+  flex,
+  pass,
+  beam,
+  ctx,
+}: {
+  side: 'L' | 'R'
+  a: ArmValues
+  hand: HandKind
+  flex: boolean
+  pass: Pass
+  beam: MotionValue<number>
+  ctx: Ctx
+}) {
+  const sx = side === 'L' ? 46 : 154
+  const sy = 140
+  const paint = passPaint(pass)
+  const held = hand === 'scanner' || hand === 'camera' ? hand : null
+  const palm = hand === 'palm'
   return (
-    <g transform={`translate(${sx} ${sy})`}>
-      <motion.g
-        animate={{ x: pose.ox ?? 0, y: pose.oy ?? 0, rotate: pose.s }}
-        transition={ctx.spring}
-      >
-<Pivot x={0} y={0} r={400} />
-        <motion.g  animate={{ rotate: loopAnim }} transition={loopTr}>
-<Pivot x={0} y={0} r={360} />
-          <rect {...UPPER} {...paint} />
-          {/* bicep bump for the flex, part of the arm's own outline and fill passes */}
-          <motion.circle
-            cx={side === 'L' ? -6 : 6}
-            cy={8}
-            r={6}
-            {...paint}
-            initial={false}
-            animate={{ opacity: pose.flex ? 1 : 0 }}
-            transition={ctx.fadeT}
-          />
-          {/* shoulder blend: hides the arm's top outline so it grows out of the body */}
-          {pass === 'fill' && <circle cx={0} cy={-1} r={8.6} fill={C.body} />}
-          <motion.g  initial={false} animate={{ rotate: pose.e }} transition={ctx.spring}>
-<Pivot x={0} y={14} r={300} />
-            <rect {...FORE} {...paint} />
-            <g transform="translate(0 28)">
-              <motion.g  initial={false} animate={{ rotate: h }} transition={ctx.spring}>
-<Pivot x={0} y={0} r={200} />
+    <motion.g style={{ x: a.ox, y: a.oy, rotate: a.s }}>
+      <Pivot x={sx} y={sy} r={700} />
+      <g transform={`translate(${sx} ${sy})`}>
+        <rect {...UPPER} style={paint} />
+        <Fade show={flex} ctx={ctx}>
+          <circle cx={side === 'L' ? -6 : 6} cy={8} r={6.5} style={paint} />
+        </Fade>
+        <motion.g style={{ rotate: a.e }}>
+          <Pivot x={0} y={ELBOW} r={500} />
+          <rect {...FORE} style={paint} />
+          <motion.g style={{ rotate: a.hand }}>
+            <Pivot x={0} y={WRIST} r={300} />
+            <g transform={`translate(0 ${WRIST})`}>
+              {pass === 'outline' && (
                 <AnimatePresence>
-                  {showProp && (
-                    <motion.g key={pose.hand} {...fade} transition={ctx.fadeT}>
-                      {pose.hand === 'scanner' ? <Scanner ctx={ctx} /> : <Camera ctx={ctx} />}
+                  {held && (
+                    <motion.g key={held} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={ctx.fade}>
+                      {held === 'scanner' ? <Scanner beam={beam} ctx={ctx} /> : <Camera ctx={ctx} />}
                     </motion.g>
                   )}
                 </AnimatePresence>
-                <AnimatePresence>
-                  <motion.g key={handKind} {...fade} transition={ctx.fadeT}>
-                    <HandShape kind={handKind} pass={pass} mirror={side === 'L'} />
-                  </motion.g>
-                </AnimatePresence>
-              </motion.g>
+              )}
+              <Fade show={!palm} ctx={ctx}>
+                <HandShape kind="fist" pass={pass} mirror={side === 'L'} />
+              </Fade>
+              <Fade show={palm} ctx={ctx}>
+                <HandShape kind="palm" pass={pass} mirror={side === 'L'} />
+              </Fade>
             </g>
           </motion.g>
         </motion.g>
-      </motion.g>
-    </g>
+      </g>
+    </motion.g>
   )
 }
 
 /* ------------------------------------------------------------------ props */
 
-const SPARKLE = 'M0 -8 Q1.4 -1.4 8 0 Q1.4 1.4 0 8 Q-1.4 1.4 -8 0 Q-1.4 -1.4 0 -8 Z'
+const STAR = 'M0 -10 L2.6 -2.6 L10 0 L2.6 2.6 L0 10 L-2.6 2.6 L-10 0 L-2.6 -2.6 Z'
 
 function Sparkles({ ctx }: { ctx: Ctx }) {
   const pts = [
-    { x: 22, y: 64, s: 1.1, d: 0 },
-    { x: 180, y: 60, s: 1.3, d: 0.5 },
-    { x: 186, y: 140, s: 0.8, d: 1 },
-    { x: 14, y: 138, s: 0.9, d: 1.4 },
+    { x: 24, y: 58, s: 1.1, d: 0, c: T.c3 },
+    { x: 180, y: 52, s: 1.35, d: 0.6, c: T.c2 },
+    { x: 186, y: 134, s: 0.85, d: 1.2, c: T.c3 },
   ]
   return (
     <>
-      {pts.map((p, i) => (
-        <g key={i} transform={`translate(${p.x} ${p.y}) scale(${p.s})`}>
+      {pts.map((p) => (
+        <g key={p.x} transform={`translate(${p.x} ${p.y}) scale(${p.s})`}>
           <motion.path
-            d={SPARKLE}
-            style={{ fill: ctx.accent2, stroke: ctx.accentDark }}
-            strokeWidth={1.4}
-            strokeLinejoin="round"
-           
-            animate={ctx.reduced ? { scale: 1, opacity: 1 } : { scale: [0.2, 1.1, 0.2], opacity: [0, 1, 0] }}
-            transition={ctx.reduced ? { duration: 0 } : { duration: 2, delay: p.d, repeat: Infinity, ease: 'easeInOut' }}
+            d={STAR}
+            style={inked(p.c, 3)}
+            initial={ctx.reduced ? false : { scale: 0, rotate: 0 }}
+            animate={ctx.reduced ? { scale: 1 } : { scale: [0, 1, 1, 0], rotate: [0, 45, 45, 90] }}
+            transition={ctx.reduced ? { duration: 0 } : { duration: 1.8, delay: p.d, times: [0, 0.3, 0.7, 1], repeat: Infinity, ease: 'easeInOut' }}
           />
         </g>
       ))}
@@ -394,14 +356,13 @@ function Sparkles({ ctx }: { ctx: Ctx }) {
 
 function Sweat({ ctx }: { ctx: Ctx }) {
   return (
-    <g transform="translate(50 96)">
+    <g transform="translate(52 94)">
       <motion.g
-       
-        animate={ctx.reduced ? { y: 0, opacity: 1 } : { y: [0, 0, 8], opacity: [0, 1, 0] }}
-        transition={ctx.reduced ? { duration: 0 } : { duration: 2.6, times: [0, 0.3, 1], repeat: Infinity, ease: 'easeIn' }}
+        animate={ctx.reduced ? { y: 0, opacity: 1 } : { y: [0, 0, 9], opacity: [0, 1, 0] }}
+        transition={ctx.reduced ? { duration: 0 } : { duration: 2.8, times: [0, 0.35, 1], repeat: Infinity, ease: 'easeIn' }}
       >
-        <path d="M0 -9 C4 -3 6.5 0.5 6.5 4 A6.5 6.5 0 0 1 -6.5 4 C-6.5 0.5 -4 -3 0 -9 Z" fill="#A9DDFF" stroke="#2F79B8" strokeWidth={1.8} />
-        <ellipse cx={-2.2} cy={3} rx={1.6} ry={2.4} fill="#FFFFFF" />
+        <path d="M0 -10 C4 -4 7 0 7 4 A7 7 0 0 1 -7 4 C-7 0 -4 -4 0 -10 Z" style={inked(T.c3, 3.5)} />
+        <rect x={-3.6} y={0.5} width={2.6} height={3.4} rx={0.8} style={fill(C.catchlight)} />
       </motion.g>
     </g>
   )
@@ -410,18 +371,17 @@ function Sweat({ ctx }: { ctx: Ctx }) {
 function Dots({ ctx }: { ctx: Ctx }) {
   return (
     <g>
-      <circle cx={132} cy={68} r={2.6} fill={C.bubble} stroke={C.outline} strokeWidth={2} />
-      <circle cx={138} cy={60} r={4} fill={C.bubble} stroke={C.outline} strokeWidth={2} />
-      <rect x={136} y={30} width={50} height={24} rx={12} fill={C.bubble} stroke={C.outline} strokeWidth={2.5} />
-      {[148, 161, 174].map((x, i) => (
+      <circle cx={134} cy={70} r={3} style={inked(T.surface, 3)} />
+      <circle cx={142} cy={60} r={4.5} style={inked(T.surface, 3.5)} />
+      <rect x={140} y={26} width={52} height={26} rx={13} style={inked(T.surface, 4)} />
+      {[153, 166, 179].map((x, i) => (
         <motion.circle
           key={x}
           cx={x}
-          cy={42}
-          r={3.6}
-          fill={C.ink}
-         
-          animate={ctx.reduced ? { opacity: 1, scale: 1 } : { opacity: [0.25, 1, 0.25], scale: [0.8, 1.15, 0.8] }}
+          cy={39}
+          r={3.8}
+          style={fill(T.ink)}
+          animate={ctx.reduced ? { opacity: 1, y: 0 } : { opacity: [0.3, 1, 0.3], y: [0, -2.5, 0] }}
           transition={ctx.reduced ? { duration: 0 } : { duration: 1.2, delay: i * 0.2, repeat: Infinity, ease: 'easeInOut' }}
         />
       ))}
@@ -433,22 +393,19 @@ const Z_PATH = 'M-5 -5 H5 L-5 5 H5'
 
 function Zzz({ ctx }: { ctx: Ctx }) {
   const zs = [
-    { x: 136, y: 56, s: 1, d: 0 },
-    { x: 152, y: 40, s: 1.4, d: 1.6 },
+    { x: 138, y: 56, s: 1, d: 0 },
+    { x: 156, y: 36, s: 1.4, d: 1.5 },
   ]
   return (
     <>
-      {zs.map((z, i) => (
-        <g key={i} transform={`translate(${z.x} ${z.y}) scale(${z.s})`}>
+      {zs.map((z) => (
+        <g key={z.x} transform={`translate(${z.x} ${z.y}) scale(${z.s})`}>
           <motion.g
-            
-           
-            animate={ctx.reduced ? { opacity: 1, x: 0, y: 0, scale: 1 } : { opacity: [0, 1, 1, 0], x: [0, 4, 10], y: [6, -6, -16], scale: [0.6, 1, 1.15] }}
-            transition={ctx.reduced ? { duration: 0 } : { duration: 3.2, delay: z.d, repeat: Infinity, ease: 'easeOut' }}
+            animate={ctx.reduced ? { opacity: 1, x: 0, y: 0 } : { opacity: [0, 1, 1, 0], x: [0, 3, 8], y: [6, -4, -14] }}
+            transition={ctx.reduced ? { duration: 0 } : { duration: 3, delay: z.d, repeat: Infinity, ease: 'easeOut' }}
           >
-<Pivot x={0} y={0} r={60} />
-            <path d={Z_PATH} fill="none" stroke={C.ink} strokeWidth={5.5} strokeLinecap="round" strokeLinejoin="round" />
-            <path d={Z_PATH} fill="none" stroke="#FFFFFF" strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round" />
+            <path d={Z_PATH} fill="none" style={{ stroke: T.ink, strokeWidth: 7, strokeLinecap: 'square', strokeLinejoin: 'miter' }} />
+            <path d={Z_PATH} fill="none" style={{ stroke: T.c2, strokeWidth: 3, strokeLinecap: 'square', strokeLinejoin: 'miter' }} />
           </motion.g>
         </g>
       ))}
@@ -458,66 +415,57 @@ function Zzz({ ctx }: { ctx: Ctx }) {
 
 function Question({ ctx }: { ctx: Ctx }) {
   return (
-    <g transform="translate(164 40)">
-      <motion.g
-        
-       
-        animate={{ rotate: ctx.reduced ? 0 : [-6, 6, -6], y: ctx.reduced ? 0 : [0, -2, 0] }}
-        transition={loopT(ctx, 2.4)}
-      >
-<Pivot x={-10} y={18} r={60} />
-        <path d="M-14 12 L-22 24 L-6 16 Z" fill={C.bubble} stroke={C.outline} strokeWidth={2.5} strokeLinejoin="round" />
-        <circle r={18} fill={C.bubble} stroke={C.outline} strokeWidth={2.5} />
-        <path d="M-6 9 L-11 15" stroke={C.bubble} strokeWidth={4} />
-        <path d="M-5.5 -4.5 Q-5.5 -11 0.5 -11 Q6.5 -11 6.5 -5 Q6.5 -1 1 1.5 L0.5 4.5" fill="none" style={{ stroke: ctx.accent }} strokeWidth={4} strokeLinecap="round" strokeLinejoin="round" />
-        <circle cx={0.5} cy={10.5} r={2.5} style={{ fill: ctx.accent }} />
-      </motion.g>
-    </g>
+    <motion.g animate={{ rotate: ctx.reduced ? 0 : [-5, 5, -5] }} transition={loopT(ctx, 2.4)}>
+      <Pivot x={150} y={60} r={60} />
+      <g transform="translate(166 38)">
+        <path d="M-15 10 L-24 26 L-5 15 Z" style={inked(T.surface, 4)} />
+        <circle r={19} style={inked(T.surface, 4)} />
+        <path d="M-6 10 L-12 17" style={{ stroke: T.surface, strokeWidth: 5 }} />
+        <path
+          d="M-6 -4.5 Q-6 -11.5 0.5 -11.5 Q7 -11.5 7 -5 Q7 -1 1.5 1.5 L0.8 4.5"
+          fill="none"
+          style={{ stroke: ctx.accent, strokeWidth: 5, strokeLinecap: 'round', strokeLinejoin: 'round' }}
+        />
+        <rect x={-2.2} y={8} width={5.4} height={5.4} rx={1.2} style={fill(ctx.accent)} />
+      </g>
+    </motion.g>
   )
 }
 
 const CONFETTI = [
-  { x: 16, d: 0, c: 0, sq: true },
-  { x: 34, d: 0.9, c: 1, sq: false },
-  { x: 52, d: 0.4, c: 2, sq: true },
-  { x: 70, d: 1.3, c: 3, sq: true },
-  { x: 88, d: 0.2, c: 1, sq: true },
-  { x: 106, d: 1.1, c: 0, sq: false },
-  { x: 124, d: 0.6, c: 2, sq: true },
-  { x: 142, d: 1.5, c: 1, sq: true },
-  { x: 160, d: 0.3, c: 3, sq: false },
-  { x: 178, d: 1.0, c: 0, sq: true },
-  { x: 192, d: 0.7, c: 2, sq: true },
-  { x: 8, d: 1.7, c: 1, sq: true },
+  { x: 18, d: 0, c: 0 },
+  { x: 40, d: 0.9, c: 1 },
+  { x: 60, d: 0.4, c: 0 },
+  { x: 84, d: 1.3, c: 1 },
+  { x: 118, d: 0.2, c: 0 },
+  { x: 140, d: 1.1, c: 1 },
+  { x: 162, d: 0.6, c: 0 },
+  { x: 184, d: 1.5, c: 1 },
 ]
 
 function Confetti({ ctx }: { ctx: Ctx }) {
-  const colors = [ctx.accent, ctx.accent2, `color-mix(in srgb, ${ctx.accent} 45%, #FFFFFF)`, '#B9C3FF']
+  const colors = [T.c2, T.c3]
   return (
     <>
       {CONFETTI.map((p, i) => {
-        const staticY = 14 + ((i * 37) % 60)
+        const staticY = 14 + ((i * 29) % 44)
         return (
           <motion.g
-            key={i}
-
-           
-            animate={
-              ctx.reduced
-                ? { y: staticY, rotate: i * 40, opacity: 1 }
-                : { y: [-6, 96], rotate: [0, i % 2 ? 300 : -300], opacity: [0, 1, 1, 0] }
-            }
+            key={p.x}
+            animate={ctx.reduced ? { y: staticY, rotate: i * 40, opacity: 1 } : { y: [-8, 92], rotate: [0, i % 2 ? 280 : -280], opacity: [0, 1, 1, 0] }}
             transition={
               ctx.reduced
                 ? { duration: 0 }
-                : { duration: 2.4, delay: p.d, repeat: Infinity, ease: 'linear', opacity: { duration: 2.4, delay: p.d, repeat: Infinity, times: [0, 0.1, 0.75, 1] } }
+                : {
+                    duration: 2.4,
+                    delay: p.d,
+                    repeat: Infinity,
+                    ease: 'linear',
+                    opacity: { duration: 2.4, delay: p.d, repeat: Infinity, times: [0, 0.1, 0.75, 1] },
+                  }
             }
           >
-            {p.sq ? (
-              <rect x={p.x - 2.5} y={-4} width={5} height={8} rx={1} style={{ fill: colors[p.c] }} stroke="rgba(0,0,0,0.35)" strokeWidth={0.8} />
-            ) : (
-              <circle cx={p.x} cy={0} r={3} style={{ fill: colors[p.c] }} stroke="rgba(0,0,0,0.35)" strokeWidth={0.8} />
-            )}
+            <rect x={p.x - 3} y={-5} width={6} height={10} rx={1} style={inked(colors[p.c], 2.5)} />
           </motion.g>
         )
       })}
@@ -525,7 +473,7 @@ function Confetti({ ctx }: { ctx: Ctx }) {
   )
 }
 
-/** Props that float around Chana (not held). */
+/** Props that float around Chana (not held, not attached to the body). */
 export function FloatProp({ kind, ctx }: { kind: PropKind; ctx: Ctx }) {
   switch (kind) {
     case 'sparkles':
@@ -543,6 +491,7 @@ export function FloatProp({ kind, ctx }: { kind: PropKind; ctx: Ctx }) {
   }
 }
 
+/** Props that ride on the body. */
 export function AttachedProp({ kind, ctx }: { kind: PropKind; ctx: Ctx }) {
   return kind === 'sweat' ? <Sweat ctx={ctx} /> : null
 }

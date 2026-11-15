@@ -1,21 +1,31 @@
-import { BetaFooter } from './hero/BetaFooter.tsx'
-import { ColoursSection } from './hero/ColoursSection.tsx'
-import { Hero } from './hero/Hero.tsx'
-import { useSmoothScroll } from './hero/useSmoothScroll.ts'
+import { useRef } from 'react'
+import { PaletteSwitcher } from './components/PaletteSwitcher.tsx'
+import { useScrollEngine } from './motion/engine.ts'
+import { Hero } from './sections/Hero.tsx'
+import { JourneyRail } from './sections/JourneyRail.tsx'
+import { Nav } from './sections/Nav.tsx'
+import { Proof } from './sections/Proof.tsx'
+import { Ticker } from './sections/Ticker.tsx'
 
 export default function App() {
-  useSmoothScroll()
+  const page = useRef<HTMLDivElement>(null)
+  useScrollEngine(page)
   return (
-    <>
-      <a
-        href="#main"
-        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:h-auto focus:w-auto focus:rounded-full focus:bg-ink focus:px-4 focus:py-3 focus:text-bg"
-      >
+    <div ref={page} className="page">
+      <a href="#main" className="skip">
         Skip to content
       </a>
-      <Hero />
-      <ColoursSection />
-      <BetaFooter />
-    </>
+      <Nav />
+      <main id="main">
+        <Hero />
+        <Ticker />
+        <Proof />
+        <div className="checkpoint-end wrap">
+          <p className="mono">Checkpoint build · sections 4–12 come next</p>
+        </div>
+      </main>
+      <JourneyRail />
+      <PaletteSwitcher />
+    </div>
   )
 }

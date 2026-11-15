@@ -12,5 +12,8 @@ export function useMediaQuery(query: string): boolean {
   )
 }
 
-export const useReducedMotion = () => useMediaQuery('(prefers-reduced-motion: reduce)')
-export const useIsMobile = () => useMediaQuery('(max-width: 767px)')
+export const REDUCED = '(prefers-reduced-motion: reduce)'
+export const MOTION_OK = '(prefers-reduced-motion: no-preference)'
+/** Desktop pinned story. Mobile and reduced motion get the stacked version. */
+export const PIN_OK = '(min-width: 1024px) and (prefers-reduced-motion: no-preference)'
+export const prefersReduced = () => window.matchMedia(REDUCED).matches

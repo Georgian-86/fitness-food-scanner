@@ -1,6 +1,12 @@
-// Chana's moods: public metadata plus the pose table that drives the SVG parts.
+// Chana's moods: public metadata plus the pose table that drives the motion.
 // Mood names are the public contract (hero, app, and later the Android
 // Rive/Lottie state machine). Do not rename them.
+//
+// Every animated number is a "channel". A channel is either a fixed target
+// (the pose springs to it) or a Loop. A loop is entered from wherever the
+// channel currently is (spring to frames[0]), then repeats frames forever, so
+// a mood change mid-hop never snaps back to neutral. All loops of one mood
+// start on the same frame, so loops with equal durations stay in phase.
 
 export type ChanaMood =
   | 'idle'
@@ -27,191 +33,211 @@ export const CHANA_MOODS: { mood: ChanaMood; label: string; when: string }[] = [
   { mood: 'lost', label: 'Not found yet', when: 'Barcode missing from the database: asks you to photograph the label and add it.' },
 ]
 
-/** One arm: shoulder rotation, elbow bend, hand rotation (degrees), shoulder offset (px). */
+export type Ease = 'linear' | 'easeIn' | 'easeOut' | 'easeInOut'
+
+export interface Loop {
+  frames: number[]
+  /** 0..1 offsets, same length as frames. Even spacing when omitted. */
+  times?: number[]
+  /** One ease for every segment, or one per segment. Default easeInOut (sine-like). */
+  ease?: Ease | Ease[]
+  /** Seconds per cycle. */
+  duration: number
+}
+
+/** A fixed target (springs) or a loop (entered from the current value). */
+export type Chan = number | Loop
+
+export type HandKind = 'fist' | 'palm' | 'scanner' | 'camera'
+export type EyeKind = 'open' | 'arc' | 'closed'
+export type MouthKind = 'smirk' | 'focus' | 'think' | 'open' | 'neutral' | 'hmm' | 'calm' | 'grin' | 'o' | 'hopeful'
+export type PropKind = 'dots' | 'sparkles' | 'sweat' | 'confetti' | 'zzz' | 'question' | 'none'
+
+/**
+ * One arm, in degrees. `s` rotates the whole arm at the shoulder (0 = hanging
+ * straight down, positive = clockwise on screen). `e` bends the elbow. `ha` is
+ * the hand's angle relative to the body (0 = upright), so the hand stays level
+ * while the arm moves. `ox`/`oy` nudge the shoulder in viewBox units.
+ */
 export interface ArmPose {
-  s: number
+  s: Chan
   e: number
-  /** Hand rotation. Omit to keep the hand upright (counter-rotates s + e). */
-  h?: number
+  ha?: number
   ox?: number
   oy?: number
   hand: HandKind
   /** Bicep bump shown (flex). */
   flex?: boolean
-  /** Looping shoulder delta keyframes, added on top of `s`. */
-  loop?: number[]
-  loopDur?: number
-}
-
-export type HandKind = 'fist' | 'palm' | 'scanner' | 'camera'
-export type EyeKind = 'open' | 'arc' | 'closed'
-export type MouthKind =
-  | 'smile'
-  | 'focus'
-  | 'think'
-  | 'open'
-  | 'neutral'
-  | 'hmm'
-  | 'calm'
-  | 'grin'
-  | 'o'
-  | 'hopeful'
-export type PropKind = 'beam' | 'dots' | 'sparkles' | 'sweat' | 'confetti' | 'zzz' | 'question' | 'none'
-
-export interface BrowPose {
-  dy: number
-  rot: number
 }
 
 export interface MoodPose {
-  /** Whole-body lean (deg) and offset, springs between moods. */
-  lean: number
-  /** Looping body motion (keyframes start/end at neutral). */
-  loop: {
-    y?: number[]
-    rotate?: number[]
-    scaleX?: number[]
-    scaleY?: number[]
-    duration: number
-    times?: number[]
-  } | null
-  eyes: {
-    kind: EyeKind
-    dx: number
-    dy: number
-    /** Upper-lid closure 0..1. */
-    lid: number
-    blink?: boolean
-    /** Looping horizontal eye track keyframes. */
-    track?: number[]
-  }
-  brows: { l: BrowPose; r: BrowPose }
+  /** Body group: lift (y), lean + sway (rot, deg), squash and stretch, pivot at the feet. */
+  body: { y: Chan; rot: Chan; sx: Chan; sy: Chan }
+  /** Gaze in viewBox units. The face shifts 45% of it, the eyes the rest. */
+  look: { x: Chan; y: Chan }
+  /** Upper-lid closure 0..1 (1 = shut). Blinks are a loop on this channel. */
+  lid: Chan
+  eyes: EyeKind
+  /** Brow lift (negative = up) and tilt, left and right. */
+  brows: { ly: number; lr: number; ry: number; rr: number }
   mouth: MouthKind
-  blush: number
   armL: ArmPose
   armR: ArmPose
+  /** Scanner beam sweep (deg). The eyes follow it. */
+  beam: Chan
   prop: PropKind
 }
 
-const restL: ArmPose = { s: 22, e: 6, hand: 'fist' }
-const restR: ArmPose = { s: -22, e: -6, hand: 'fist' }
-const browsFlat = { l: { dy: 0, rot: 0 }, r: { dy: 0, rot: 0 } }
+const blink = (lid: number, duration = 3.8): Loop => ({
+  frames: [lid, lid, 1, lid],
+  times: [0, 0.93, 0.965, 1],
+  duration,
+})
+const breathe = (amount: number, duration: number) => ({
+  sy: { frames: [1, 1 + amount, 1], duration },
+  sx: { frames: [1, 1 - amount * 0.5, 1], duration },
+})
+
+const restL: ArmPose = { s: 20, e: 8, hand: 'fist' }
+const restR: ArmPose = { s: -20, e: -8, hand: 'fist' }
+const flat = { ly: 0, lr: 0, ry: 0, rr: 0 }
+
+// The happy hop: anticipation squash, take-off stretch, hang, fall, land squash,
+// small rebound, then a rest. One shared time grid keeps squash on the beat.
+const HOP_T = [0, 0.1, 0.22, 0.3, 0.42, 0.5, 0.6, 1]
+const HOP_D = 1.8
 
 export const POSES: Record<ChanaMood, MoodPose> = {
   idle: {
-    lean: 0,
-    loop: { scaleY: [1, 1.025, 1], scaleX: [1, 0.988, 1], duration: 3.2 },
-    eyes: { kind: 'open', dx: 0, dy: 0, lid: 0, blink: true },
-    brows: browsFlat,
-    mouth: 'smile',
-    blush: 0.5,
+    body: { y: 0, rot: 0, ...breathe(0.03, 3) },
+    look: { x: 0, y: 0 },
+    lid: blink(0),
+    eyes: 'open',
+    brows: flat,
+    mouth: 'smirk',
     armL: restL,
     armR: restR,
+    beam: 0,
     prop: 'none',
   },
   scanning: {
-    lean: 3,
-    loop: { y: [0, -1.5, 0], duration: 2 },
-    eyes: { kind: 'open', dx: 4, dy: 3, lid: 0.12, track: [-3.5, 3.5, -3.5] },
-    brows: { l: { dy: 1, rot: 0 }, r: { dy: 0, rot: 0 } },
+    body: { y: { frames: [0, -1.5, 0], duration: 2.2 }, rot: 3, sx: 1, sy: 1 },
+    look: { x: 3, y: 3 },
+    lid: 0.15,
+    eyes: 'open',
+    brows: { ly: 2, lr: 4, ry: -1, rr: 0 },
     mouth: 'focus',
-    blush: 0.45,
     armL: restL,
     armR: { s: -58, e: -32, hand: 'scanner' },
-    prop: 'beam',
+    beam: { frames: [-16, 16, -16], duration: 2.2 },
+    prop: 'none',
   },
   thinking: {
-    lean: -4,
-    loop: { rotate: [0, 2, 0], duration: 3 },
-    eyes: { kind: 'open', dx: 4, dy: -5, lid: 0, blink: true },
-    brows: { l: { dy: -1, rot: 0 }, r: { dy: -5, rot: -8 } },
+    body: { y: 0, rot: { frames: [-4, -1.5, -4], duration: 3 }, sx: 1, sy: 1 },
+    look: { x: 4, y: -5 },
+    lid: blink(0, 3),
+    eyes: 'open',
+    brows: { ly: -1, lr: 0, ry: -6, rr: -8 },
     mouth: 'think',
-    blush: 0.4,
     armL: restL,
     armR: { s: -200, e: -45, hand: 'fist' },
+    beam: 0,
     prop: 'dots',
   },
   happy: {
-    lean: 0,
-    loop: {
-      y: [0, -12, 0, 0, 0],
-      scaleY: [1, 1.04, 0.95, 1, 1],
-      scaleX: [1, 0.97, 1.04, 1, 1],
-      times: [0, 0.18, 0.36, 0.46, 1],
-      duration: 2.2,
+    body: {
+      y: { frames: [0, 0, -17, -18, 0, 0, 0, 0], times: HOP_T, duration: HOP_D, ease: ['easeInOut', 'easeOut', 'easeOut', 'easeIn', 'linear', 'linear', 'linear'] },
+      rot: 0,
+      sy: { frames: [1, 0.9, 1.07, 1.02, 0.89, 1.03, 1, 1], times: HOP_T, duration: HOP_D },
+      sx: { frames: [1, 1.07, 0.95, 0.99, 1.09, 0.98, 1, 1], times: HOP_T, duration: HOP_D },
     },
-    eyes: { kind: 'open', dx: 0, dy: -1, lid: 0, blink: true },
-    brows: { l: { dy: -4, rot: 0 }, r: { dy: -4, rot: 0 } },
+    look: { x: 0, y: -1 },
+    lid: blink(0, HOP_D * 2),
+    eyes: 'open',
+    brows: { ly: -5, lr: 0, ry: -5, rr: 0 },
     mouth: 'open',
-    blush: 0.8,
     armL: { s: 148, e: 14, hand: 'fist' },
     armR: { s: -148, e: -14, hand: 'fist' },
+    beam: 0,
     prop: 'sparkles',
   },
   okay: {
-    lean: 0,
-    loop: { y: [0, -3, 0, 0], times: [0, 0.2, 0.45, 1], duration: 2.6 },
-    eyes: { kind: 'open', dx: 0, dy: 0, lid: 0.22, blink: true },
-    brows: { l: { dy: -3, rot: 4 }, r: { dy: -3, rot: -4 } },
+    body: { y: { frames: [0, -2, 0], duration: 2.4 }, rot: 0, sx: 1, sy: 1 },
+    look: { x: 0, y: 0 },
+    lid: blink(0.22),
+    eyes: 'open',
+    brows: { ly: -3, lr: 6, ry: -3, rr: -6 },
     mouth: 'neutral',
-    blush: 0.5,
-    armL: { s: 62, e: 62, h: -10, hand: 'palm', loop: [0, -10, 0, 0], loopDur: 2.6 },
-    armR: { s: -62, e: -62, h: 10, hand: 'palm', loop: [0, 10, 0, 0], loopDur: 2.6 },
+    armL: { s: { frames: [64, 54, 64], duration: 2.4 }, e: 62, ha: -40, hand: 'palm' },
+    armR: { s: { frames: [-64, -54, -64], duration: 2.4 }, e: -62, ha: 40, hand: 'palm' },
+    beam: 0,
     prop: 'none',
   },
   caution: {
-    lean: -3,
-    loop: { rotate: [0, -1.5, 0], duration: 2.8 },
-    eyes: { kind: 'open', dx: 5, dy: 0, lid: 0.45 },
-    brows: { l: { dy: 2, rot: 0 }, r: { dy: -6, rot: -10 } },
+    body: { y: 0, rot: { frames: [-3, -4.5, -3], duration: 2.8 }, sx: 1, sy: 1 },
+    look: { x: 5, y: 0 },
+    lid: 0.42,
+    eyes: 'open',
+    brows: { ly: 2, lr: 0, ry: -7, rr: -10 },
     mouth: 'hmm',
-    blush: 0.45,
-    armL: { s: 18, e: 4, hand: 'fist' },
-    armR: { s: -18, e: -4, hand: 'fist' },
+    armL: { s: 16, e: 4, hand: 'fist' },
+    armR: { s: -16, e: -4, hand: 'fist' },
+    beam: 0,
     prop: 'sweat',
   },
   avoid: {
-    lean: 0,
-    loop: { rotate: [0, -3.5, 3.5, 0], duration: 3.6 },
-    eyes: { kind: 'open', dx: 0, dy: 1, lid: 0.32, blink: true },
-    brows: { l: { dy: 1, rot: 0 }, r: { dy: 1, rot: 0 } },
+    // A slow, kind head shake: body and gaze sway together, the palm wags with them.
+    body: { y: 0, rot: { frames: [0, -4, 0, 4, 0], duration: 2.8 }, sx: 1, sy: 1 },
+    look: { x: { frames: [0, -4, 0, 4, 0], duration: 2.8 }, y: 1 },
+    lid: 0.3,
+    eyes: 'open',
+    brows: { ly: 1, lr: 0, ry: 1, rr: 0 },
     mouth: 'calm',
-    blush: 0.5,
-    armL: { s: -30, e: -62, ox: 14, oy: 2, hand: 'fist' },
-    armR: { s: -118, e: -22, hand: 'palm' },
+    armL: restL,
+    armR: { s: { frames: [-140, -134, -140, -146, -140], duration: 2.8 }, e: -18, hand: 'palm' },
+    beam: 0,
     prop: 'none',
   },
   celebrate: {
-    lean: 0,
-    loop: { y: [0, -5, 0], scaleY: [1, 1.03, 1], duration: 1.1 },
-    eyes: { kind: 'arc', dx: 0, dy: 0, lid: 0 },
-    brows: { l: { dy: -5, rot: 0 }, r: { dy: -5, rot: 0 } },
+    // Two bounces per cycle with a flex pump on each, squash on every landing.
+    body: {
+      y: { frames: [0, -7, 0, -7, 0], duration: 1.6, ease: ['easeOut', 'easeIn', 'easeOut', 'easeIn'] },
+      rot: 0,
+      sy: { frames: [0.95, 1.04, 0.95, 1.04, 0.95], duration: 1.6 },
+      sx: { frames: [1.04, 0.97, 1.04, 0.97, 1.04], duration: 1.6 },
+    },
+    look: { x: 0, y: 0 },
+    lid: 0,
+    eyes: 'arc',
+    brows: { ly: -6, lr: 0, ry: -6, rr: 0 },
     mouth: 'grin',
-    blush: 0.85,
-    armL: { s: 112, e: 78, ox: -7, oy: -13, hand: 'fist', flex: true, loop: [0, -10, 0], loopDur: 1.1 },
-    armR: { s: -112, e: -78, ox: 7, oy: -13, hand: 'fist', flex: true, loop: [0, 10, 0], loopDur: 1.1 },
+    armL: { s: { frames: [112, 100, 112, 100, 112], duration: 1.6 }, e: 78, ox: -7, oy: -13, hand: 'fist', flex: true },
+    armR: { s: { frames: [-112, -100, -112, -100, -112], duration: 1.6 }, e: -78, ox: 7, oy: -13, hand: 'fist', flex: true },
+    beam: 0,
     prop: 'confetti',
   },
   sleepy: {
-    lean: 5,
-    loop: { scaleY: [1, 1.03, 1], scaleX: [1, 0.985, 1], duration: 4 },
-    eyes: { kind: 'closed', dx: 0, dy: 2, lid: 0 },
-    brows: { l: { dy: 2, rot: -6 }, r: { dy: 2, rot: 6 } },
+    body: { y: 0, rot: 5, ...breathe(0.035, 3) },
+    look: { x: 0, y: 2 },
+    lid: 0,
+    eyes: 'closed',
+    brows: { ly: 2, lr: -6, ry: 2, rr: 6 },
     mouth: 'o',
-    blush: 0.55,
     armL: { s: 12, e: 4, hand: 'fist' },
     armR: { s: -12, e: -4, hand: 'fist' },
+    beam: 0,
     prop: 'zzz',
   },
   lost: {
-    lean: -2,
-    loop: { y: [0, -3, 0], duration: 2.4 },
-    eyes: { kind: 'open', dx: -3, dy: -4, lid: 0, blink: true },
-    brows: { l: { dy: -4, rot: -10 }, r: { dy: -4, rot: 10 } },
+    body: { y: { frames: [0, -3, 0], duration: 2.4 }, rot: -2, sx: 1, sy: 1 },
+    look: { x: -3, y: -4 },
+    lid: blink(0, 2.4 * 2),
+    eyes: 'open',
+    brows: { ly: -5, lr: -10, ry: -5, rr: 10 },
     mouth: 'hopeful',
-    blush: 0.6,
     armL: restL,
     armR: { s: -150, e: -18, hand: 'camera' },
+    beam: 0,
     prop: 'question',
   },
 }
