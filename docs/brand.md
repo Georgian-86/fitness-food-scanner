@@ -1,79 +1,89 @@
-# Brand and hero brief v0
+# Brand identity v1: neobrutalist
 
-Working decisions for the marketing hero. The product name is a placeholder until the owner picks one; the mascot is called **Chana**.
+Replaces v0 (the dark neon hero). The product name is still a placeholder; the wordmark is **chana.** after the mascot.
 
 ## What the brand stands for
 
-- **Personal, not preachy:** the same food gets a different verdict for a different goal. We never shame a food or a person.
-- **Honest numbers:** protein per ₹100, a protein-washing flag, one plain reason line.
-- **Indian and gym-first:** desi staples, rupees, Android, quick-commerce.
-- **Playful:** scanning should feel like a game (XP, streaks, a mascot who reacts), never like a lecture.
-- **Never fear-based:** red means "avoid for you". No "dangerous", no medical claims.
+| Value | What it means on the page |
+| --- | --- |
+| **Personal** | The same food gets a different verdict for a different goal. Never shame a food or a person. |
+| **Honest** | Show the rules, name the data source, take no brand money. No invented numbers, reviews or logos. |
+| **Desi and gym-first** | Rupees, Indian staples, Android, quick-commerce, a little Hinglish where it lands naturally. |
+| **Playful but sharp** | Stickers, a mascot, XP and streaks, but the information is precise and fast. |
+| **Never fear-based** | Red means "avoid for you". No "dangerous", no "toxic", no medical claims. |
 
-## Verdict colours (fixed in every palette)
+Voice: a gym buddy who has read the label for you. Short sentences, numbers first, no lectures. Example: "18 g sugar per 100 g. Not for your cut."
 
-These are the product's core signal. Brand accents must never be mistaken for them, and every verdict chip carries a text label and an icon as well as the colour.
+## The hard colour rule
 
-| Verdict | Hex | Label |
-| --- | --- | --- |
-| Green | `#22C55E` | Fits your goal |
-| Yellow | `#FACC15` | Fine in moderation |
-| Orange | `#FB923C` | Works against your goal |
-| Red | `#F43F5E` | Avoid for you |
+The four verdict colours are the product's core signal, and neobrutalism's usual primaries (yellow, red, green) are those same colours. Decorative colour therefore never uses the verdict hues, and mint and lime are out too (they read as green). Brand colour lives in pink, violet, cobalt, sky, chai and ink.
 
-## Palettes (three directions to compare)
-
-| Token | `neon-pulse` (owner's reference) | `ultraviolet` | `cobalt-chalk` (light) |
+| Verdict | Hex | Label | Icon |
 | --- | --- | --- | --- |
-| `--bg` | `#0B0B0B` | `#0D0A1F` | `#F3EFE6` |
-| `--surface` | `#161616` | `#17122E` | `#FFFFFF` |
-| `--ink` | `#F5F5F0` | `#EEEAFE` | `#111111` |
-| `--muted` | `#A3A39B` | `#A59FC9` | `#55524B` |
-| `--accent-1` | `#FF2DAB` hot pink | `#8B5CFF` violet | `#2340FF` cobalt |
-| `--on-accent-1` | `#0B0B0B` | `#0D0A1F` | `#FFFFFF` |
-| `--accent-2` | `#D4FF3F` chartreuse | `#3DF5FF` cyan | `#B9C3FF` periwinkle |
-| `--on-accent-2` | `#0B0B0B` | `#0D0A1F` | `#111111` |
+| Green | `#22C55E` | Fits your goal | check |
+| Yellow | `#FACC15` | Fine in moderation | minus |
+| Orange | `#FB923C` | Works against your goal | arrow down |
+| Red | `#F43F5E` | Avoid for you | cross |
 
-`neon-pulse` caveat: chartreuse sits close to the green and yellow verdicts. Use it for headline type, blobs and buttons, never next to a verdict chip without the chip's label.
+Verdict chips always carry the label and the icon, in fixed dark text `#0A0A0A`.
+
+The owner's earlier reference (black, hot pink, chartreuse) is not offered: chartreuse sits between the green and yellow verdicts.
+
+## Palettes (five directions to compare)
+
+| Token | `bubblegum` | `cobalt-punch` | `night-shift` (dark) | `ube-chai` | `ink-lilac` |
+| --- | --- | --- | --- | --- | --- |
+| `--bg` | `#FFF4E6` cream | `#EEF0FF` ice | `#111111` | `#F3E9DC` chai | `#FAFAF7` paper |
+| `--surface` | `#FFFFFF` | `#FFFFFF` | `#1C1C1C` | `#FFFBF5` | `#FFFFFF` |
+| `--ink` (text, borders, shadows) | `#0A0A0A` | `#0A0A0A` | `#F7F3EA` | `#1B1030` | `#0A0A0A` |
+| `--muted` | `#4A4540` | `#3F4360` | `#B9B4A8` | `#4E4060` | `#55534D` |
+| `--c1` | `#FF4FD8` magenta | `#2F3BFF` cobalt | `#B79CFF` lavender | `#7B2FF7` ube | `#0A0A0A` ink block |
+| `--on-c1` | `#0A0A0A` | `#FFFFFF` | `#111111` | `#FFFFFF` | `#FFFFFF` |
+| `--c2` | `#6B5BFF` violet | `#FF7AC6` pink | `#FF4FD8` magenta | `#FFB3E6` candy | `#D9C8FF` lilac |
+| `--on-c2` | `#FFFFFF` | `#0A0A0A` | `#111111` | `#1B1030` | `#0A0A0A` |
+| `--c3` | `#9BE7FF` sky | `#C8B6FF` lilac | `#7FD8FF` sky | `#2A2AFF` cobalt | `#FF4FD8` magenta (sparingly) |
+| `--on-c3` | `#0A0A0A` | `#0A0A0A` | `#111111` | `#FFFFFF` | `#0A0A0A` |
+
+Default for the base branch: `bubblegum`. On `night-shift`, borders and hard shadows use `--ink` (cream) on dark, which keeps the neobrutalist look.
 
 ## Type
 
-- Display: **Barlow Condensed** 800, uppercase, tight tracking (sporty, like gym signage).
-- Body: **Barlow** 400/500/600.
-- Picked with the UI/UX Pro Max skill (fitness, athletic, energetic).
+- **Archivo** (Google Fonts, variable: weight 400–900, width 62–125). Display: weight 900 at width 112–125 (expanded), tight tracking, often uppercase. Body: weight 400/500/600 at width 100.
+- **JetBrains Mono** 500/700 for numbers, labels and nutrition-table rows (feels like a printed label).
+- Display sizes use `clamp()`; body never below 16 px on mobile.
 
-## Hero copy
+## System tokens
 
-- Eyebrow: Made for Indian gym-goers
-- Headline: **Same snack. Different verdict.**
-- Sub: Scan a packaged food and see whether it fits *your* goal, cutting or bulking, in about a second.
-- Primary button: Join the Android beta
-- Secondary button: How the colours work
-- Small print: Scanning is always free.
+| Token | Value |
+| --- | --- |
+| `--bw` border width | 3px (2px under 640 px) |
+| `--sh` hard shadow offset | 6px 6px (4px small, 10px for hero objects) |
+| Shadow colour | `--ink`, no blur, ever |
+| `--r` radius | 14px cards, 999px pills, 0 for tables |
+| Motion easing | entrances `expo.out` 0.7s; hovers 150 ms `power2.out`; scroll scrubs linear (`none`) |
+| Hover / press | button lifts: translate(-2px,-2px) with shadow growing; press: translate(shadow) with shadow 0 (done as a separate shadow layer, never by animating `box-shadow`) |
+
+Decorative vocabulary: tilted sticker labels (±3°), nutrition-label tables, barcode stripes, star bursts, chunky arrows, grid paper texture (CSS, very faint). No gradients, no blur, no glassmorphism.
+
+## Wordmark and mascot
+
+- Wordmark: `chana.` lowercase, Archivo 900 expanded, the dot in `--c1`.
+- Mark: Chana's head in a rounded square with a 3 px border and hard shadow.
+- Chana is redrawn neobrutalist: flat fills, thick ink outline, hard offset shadow (see `docs/mascot.md`).
+
+## Trust rules for all copy (no exceptions)
+
+Allowed: the scoring rules published openly, Open Food Facts named as the data source, "no brand money in our ratings", "scanning is free forever", a founder note from Golu, "a pilot with one gym is starting".
+
+Not allowed until real: user counts, star ratings, testimonials, press or partner logos, "#1", "dietitian-approved" (the dietitian review in `docs/scoring-rules.md` has not happened), claims about named competitors. Compare categories instead: "scanners that give everyone the same score", "trackers that don't judge the food".
 
 ## Demo product (checked against `docs/scoring-rules.md`)
 
-A generic protein bar with no brand: 60 g bar, ₹60.
+Unbranded protein bar, 60 g, ₹60. Per 100 g: 400 kcal, 25 g protein, 18 g sugar, 4 g saturated fat, 0.6 g salt.
 
-| Per 100 g | Value |
-| --- | --- |
-| Energy | 400 kcal |
-| Protein | 25 g |
-| Sugar | 18 g |
-| Saturated fat | 4 g |
-| Salt | 0.6 g |
+- Not red: only sugar is near "high" (18 < 22.5 g).
+- Fat loss → orange: "18 g sugar per 100 g: high for your cut."
+- Muscle gain → green: "15 g protein per bar: fits your bulk."
+- 25 g protein per ₹100. No protein-washing flag (protein is 25% of calories).
 
-- **Red check:** only sugar is anywhere near "high" (18 < 22.5 g), so it is not red.
-- **Fat loss → 🟠 orange.** Reason: "18 g sugar per 100 g: high for your cut."
-- **Muscle gain → 🟢 green.** Reason: "15 g protein per bar: fits your bulk."
-- **Protein per ₹100:** 25 g. No protein-washing flag (protein is 25% of calories).
-
-## Hero motion graphic (one loop, about 8 seconds)
-
-1. Two soft organic blobs in `--accent-1` and `--accent-2` drift slowly behind everything.
-2. A phone frame holds the unbranded protein bar; a scan beam sweeps across its barcode.
-3. A result card slides up. Goal: **Fat loss** → orange chip with its reason line.
-4. The goal toggle flips to **Muscle gain** → the chip turns green, and the reason changes.
-5. Chana reacts beside the phone: caution, then happy, and a "+10 XP" chip pops.
-
-The Higgsfield video (prompts in `docs/hero-video-prompts.md`) shows the same scene, without the UI text, so it can replace the coded graphic later without a redesign.
+Illustrative protein-washing example (label it "example"): a "high protein" cookie with 400 kcal and 12 g protein per 100 g. Protein is 12% of calories, under the 20% line, so the flag shows.

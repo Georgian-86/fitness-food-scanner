@@ -1,3 +1,5 @@
+> **Out of date:** written for the v0 dark neon hero. Rewrite against `docs/brand.md` v1 once the owner picks a neobrutalist direction.
+
 # Hero video prompts (Higgsfield)
 
 Prompts for the AI-generated hero clip described in `docs/brand.md`: "Same snack. Different verdict." The clip shows the same scene as the coded hero (drifting blobs, a phone scanning an unbranded protein bar, a verdict changing from orange to green, Chana reacting) so it can replace the coded graphic later.
