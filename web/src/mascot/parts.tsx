@@ -2,22 +2,9 @@
 // Each part is a small component so moods swap expressions and props while the
 // silhouette (body, band, feet) stays identical.
 import { AnimatePresence, motion, type Transition } from 'motion/react'
+import { C } from './colors.ts'
 import type { ArmPose, BrowPose, HandKind, MoodPose, MouthKind, PropKind } from './moods.ts'
 
-export const C = {
-  body: '#E8C98F',
-  shade: '#C9A25F',
-  hilite: '#F6E3B8',
-  outline: '#7A5329',
-  ink: '#24160D',
-  brow: '#5E3B1C',
-  blush: '#F0868F',
-  mouthIn: '#7A2A20',
-  tongue: '#F28C8C',
-  gadget: '#2E2E38',
-  gadgetRim: '#9A9AAE',
-  bubble: '#FFFFFF',
-}
 
 /**
  * Rotation pivot for a motion <g>. Motion rotates SVG around the centre of the
@@ -114,7 +101,7 @@ export function Eye({ cx, cy, pose, ctx, id }: { cx: number; cy: number; pose: M
   return (
     <g transform={`translate(${cx} ${cy})`}>
       <motion.g animate={{ x: xAnim, y: pose.dy }} transition={{ x: xT, y: ctx.spring }}>
-        <AnimatePresence initial={false}>
+        <AnimatePresence>
           {pose.kind === 'open' && (
             <motion.g key="open" {...fade} transition={ctx.fadeT}>
               <defs>
@@ -137,7 +124,7 @@ export function Eye({ cx, cy, pose, ctx, id }: { cx: number; cy: number; pose: M
                   strokeWidth={2.4}
                   vectorEffect="non-scaling-stroke"
                   style={{ originY: 0 }}
-                  initial={false}
+                  initial={{ scaleY: pose.lid }}
                   animate={{ scaleY: lidAnim }}
                   transition={lidT}
                 />
@@ -239,7 +226,7 @@ function mouthShape(kind: MouthKind) {
 
 export function Mouth({ kind, ctx }: { kind: MouthKind; ctx: Ctx }) {
   return (
-    <AnimatePresence initial={false}>
+    <AnimatePresence>
       <motion.g key={kind} {...fade} transition={ctx.fadeT}>
         {mouthShape(kind)}
       </motion.g>
@@ -286,7 +273,7 @@ function Scanner({ ctx }: { ctx: Ctx }) {
       </defs>
       <motion.g
         
-        initial={false}
+       
         animate={{ rotate: ctx.reduced ? 0 : [-16, 16, -16] }}
         transition={loopT(ctx, 2.2)}
       >
@@ -315,8 +302,8 @@ function Camera({ ctx }: { ctx: Ctx }) {
 }
 
 export function Arm({ side, pose, pass, ctx }: { side: 'L' | 'R'; pose: ArmPose; pass: 'outline' | 'fill'; ctx: Ctx }) {
-  const sx = side === 'L' ? 46 : 154
-  const sy = 132
+  const sx = side === 'L' ? 44 : 156
+  const sy = 142
   const h = pose.h ?? -(pose.s + pose.e)
   const paint =
     pass === 'outline'
@@ -329,15 +316,23 @@ export function Arm({ side, pose, pass, ctx }: { side: 'L' | 'R'; pose: ArmPose;
   return (
     <g transform={`translate(${sx} ${sy})`}>
       <motion.g
-        
-        initial={false}
         animate={{ x: pose.ox ?? 0, y: pose.oy ?? 0, rotate: pose.s }}
         transition={ctx.spring}
       >
 <Pivot x={0} y={0} r={400} />
-        <motion.g  initial={false} animate={{ rotate: loopAnim }} transition={loopTr}>
+        <motion.g  animate={{ rotate: loopAnim }} transition={loopTr}>
 <Pivot x={0} y={0} r={360} />
           <rect {...UPPER} {...paint} />
+          {/* bicep bump for the flex, part of the arm's own outline and fill passes */}
+          <motion.circle
+            cx={side === 'L' ? -6 : 6}
+            cy={8}
+            r={6}
+            {...paint}
+            initial={false}
+            animate={{ opacity: pose.flex ? 1 : 0 }}
+            transition={ctx.fadeT}
+          />
           {/* shoulder blend: hides the arm's top outline so it grows out of the body */}
           {pass === 'fill' && <circle cx={0} cy={-1} r={8.6} fill={C.body} />}
           <motion.g  initial={false} animate={{ rotate: pose.e }} transition={ctx.spring}>
@@ -346,14 +341,14 @@ export function Arm({ side, pose, pass, ctx }: { side: 'L' | 'R'; pose: ArmPose;
             <g transform="translate(0 28)">
               <motion.g  initial={false} animate={{ rotate: h }} transition={ctx.spring}>
 <Pivot x={0} y={0} r={200} />
-                <AnimatePresence initial={false}>
+                <AnimatePresence>
                   {showProp && (
                     <motion.g key={pose.hand} {...fade} transition={ctx.fadeT}>
                       {pose.hand === 'scanner' ? <Scanner ctx={ctx} /> : <Camera ctx={ctx} />}
                     </motion.g>
                   )}
                 </AnimatePresence>
-                <AnimatePresence initial={false}>
+                <AnimatePresence>
                   <motion.g key={handKind} {...fade} transition={ctx.fadeT}>
                     <HandShape kind={handKind} pass={pass} mirror={side === 'L'} />
                   </motion.g>
@@ -361,22 +356,6 @@ export function Arm({ side, pose, pass, ctx }: { side: 'L' | 'R'; pose: ArmPose;
               </motion.g>
             </g>
           </motion.g>
-          {/* bicep bump for the flex */}
-          {pass === 'fill' && (
-            <motion.ellipse
-              cx={-6}
-              cy={6}
-              rx={6.5}
-              ry={6}
-              fill={C.body}
-              stroke={C.outline}
-              strokeWidth={2.5}
-              initial={false}
-              animate={{ opacity: pose.flex ? 1 : 0 }}
-              transition={ctx.fadeT}
-              transform={side === 'R' ? 'scale(-1 1)' : undefined}
-            />
-          )}
         </motion.g>
       </motion.g>
     </g>
@@ -403,7 +382,7 @@ function Sparkles({ ctx }: { ctx: Ctx }) {
             style={{ fill: ctx.accent2, stroke: ctx.accentDark }}
             strokeWidth={1.4}
             strokeLinejoin="round"
-            initial={false}
+           
             animate={ctx.reduced ? { scale: 1, opacity: 1 } : { scale: [0.2, 1.1, 0.2], opacity: [0, 1, 0] }}
             transition={ctx.reduced ? { duration: 0 } : { duration: 2, delay: p.d, repeat: Infinity, ease: 'easeInOut' }}
           />
@@ -417,7 +396,7 @@ function Sweat({ ctx }: { ctx: Ctx }) {
   return (
     <g transform="translate(50 96)">
       <motion.g
-        initial={false}
+       
         animate={ctx.reduced ? { y: 0, opacity: 1 } : { y: [0, 0, 8], opacity: [0, 1, 0] }}
         transition={ctx.reduced ? { duration: 0 } : { duration: 2.6, times: [0, 0.3, 1], repeat: Infinity, ease: 'easeIn' }}
       >
@@ -441,7 +420,7 @@ function Dots({ ctx }: { ctx: Ctx }) {
           cy={42}
           r={3.6}
           fill={C.ink}
-          initial={false}
+         
           animate={ctx.reduced ? { opacity: 1, scale: 1 } : { opacity: [0.25, 1, 0.25], scale: [0.8, 1.15, 0.8] }}
           transition={ctx.reduced ? { duration: 0 } : { duration: 1.2, delay: i * 0.2, repeat: Infinity, ease: 'easeInOut' }}
         />
@@ -463,7 +442,7 @@ function Zzz({ ctx }: { ctx: Ctx }) {
         <g key={i} transform={`translate(${z.x} ${z.y}) scale(${z.s})`}>
           <motion.g
             
-            initial={false}
+           
             animate={ctx.reduced ? { opacity: 1, x: 0, y: 0, scale: 1 } : { opacity: [0, 1, 1, 0], x: [0, 4, 10], y: [6, -6, -16], scale: [0.6, 1, 1.15] }}
             transition={ctx.reduced ? { duration: 0 } : { duration: 3.2, delay: z.d, repeat: Infinity, ease: 'easeOut' }}
           >
@@ -482,7 +461,7 @@ function Question({ ctx }: { ctx: Ctx }) {
     <g transform="translate(164 40)">
       <motion.g
         
-        initial={false}
+       
         animate={{ rotate: ctx.reduced ? 0 : [-6, 6, -6], y: ctx.reduced ? 0 : [0, -2, 0] }}
         transition={loopT(ctx, 2.4)}
       >
@@ -522,7 +501,7 @@ function Confetti({ ctx }: { ctx: Ctx }) {
           <motion.g
             key={i}
 
-            initial={false}
+           
             animate={
               ctx.reduced
                 ? { y: staticY, rotate: i * 40, opacity: 1 }

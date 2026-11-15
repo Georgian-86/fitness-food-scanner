@@ -188,8 +188,8 @@ export const POSES: Record<ChanaMood, MoodPose> = {
     brows: { l: { dy: -5, rot: 0 }, r: { dy: -5, rot: 0 } },
     mouth: 'grin',
     blush: 0.85,
-    armL: { s: 92, e: 96, hand: 'fist', flex: true, loop: [0, -12, 0], loopDur: 1.1 },
-    armR: { s: -92, e: -96, hand: 'fist', flex: true, loop: [0, 12, 0], loopDur: 1.1 },
+    armL: { s: 112, e: 78, ox: -7, oy: -13, hand: 'fist', flex: true, loop: [0, -10, 0], loopDur: 1.1 },
+    armR: { s: -112, e: -78, ox: 7, oy: -13, hand: 'fist', flex: true, loop: [0, 10, 0], loopDur: 1.1 },
     prop: 'confetti',
   },
   sleepy: {

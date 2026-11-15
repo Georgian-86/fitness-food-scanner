@@ -1,7 +1,8 @@
 import { useId, type JSX } from 'react'
 import { AnimatePresence, motion, useReducedMotion, type Transition } from 'motion/react'
 import { POSES, type ChanaMood } from './moods.ts'
-import { AttachedProp, Arm, Body, Brow, C, Eye, FloatProp, Mouth, Pivot, type Ctx } from './parts.tsx'
+import { C } from './colors.ts'
+import { AttachedProp, Arm, Body, Brow, Eye, FloatProp, Mouth, Pivot, type Ctx } from './parts.tsx'
 
 export interface ChanaProps {
   mood: ChanaMood
@@ -71,7 +72,7 @@ export function Chana({ mood, size = 160, className, accent = 'var(--accent-1, #
       <ellipse cx={100} cy={187} rx={46} ry={6} fill="#000000" opacity={0.16} />
       <motion.g initial={false} animate={{ rotate: pose.lean }} transition={ctx.spring}>
 <Pivot x={100} y={184} r={900} />
-        <motion.g initial={false} animate={loopAnim} transition={loopT}>
+        <motion.g animate={loopAnim} transition={loopT}>
 <Pivot x={100} y={184} r={800} />
           <Body ctx={ctx} />
           <motion.g initial={false} animate={{ opacity: pose.blush }} transition={ctx.fadeT}>
@@ -87,7 +88,7 @@ export function Chana({ mood, size = 160, className, accent = 'var(--accent-1, #
           <Arm side="L" pose={pose.armL} pass="fill" ctx={ctx} />
           <Arm side="R" pose={pose.armR} pass="outline" ctx={ctx} />
           <Arm side="R" pose={pose.armR} pass="fill" ctx={ctx} />
-          <AnimatePresence initial={false}>
+          <AnimatePresence>
             {pose.prop === 'sweat' && (
               <motion.g key="sweat" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={ctx.fadeT}>
                 <AttachedProp kind="sweat" ctx={ctx} />
@@ -95,7 +96,7 @@ export function Chana({ mood, size = 160, className, accent = 'var(--accent-1, #
             )}
           </AnimatePresence>
         </motion.g>
-        <AnimatePresence initial={false}>
+        <AnimatePresence>
           {pose.prop !== 'none' && pose.prop !== 'sweat' && pose.prop !== 'beam' && (
             <motion.g key={pose.prop} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={ctx.fadeT}>
               <FloatProp kind={pose.prop} ctx={ctx} />
