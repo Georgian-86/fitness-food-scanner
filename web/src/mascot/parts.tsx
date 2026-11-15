@@ -1,7 +1,6 @@
 // SVG parts for Chana, drawn in a 200 x 200 viewBox.
 // Each part is a small component so moods swap expressions and props while the
 // silhouette (body, band, feet) stays identical.
-import type { CSSProperties } from 'react'
 import { AnimatePresence, motion, type Transition } from 'motion/react'
 import type { ArmPose, BrowPose, HandKind, MoodPose, MouthKind, PropKind } from './moods.ts'
 
@@ -20,9 +19,14 @@ export const C = {
   bubble: '#FFFFFF',
 }
 
-/** Pivot for a motion SVG element: px coordinates in the element's own user space. */
-export function pivot(x: number, y: number): CSSProperties {
-  return { transformBox: 'view-box', transformOrigin: `${x}px ${y}px` }
+/**
+ * Rotation pivot for a motion <g>. Motion rotates SVG around the centre of the
+ * element's fill-box, so a large invisible circle centred on the pivot makes the
+ * box centre equal the pivot, whatever the parent transforms are. Nested pivots
+ * need strictly smaller radii so an outer pad always contains the inner ones.
+ */
+export function Pivot({ x, y, r }: { x: number; y: number; r: number }) {
+  return <circle cx={x} cy={y} r={r} fill="none" pointerEvents="none" />
 }
 
 const fade = {
@@ -132,7 +136,7 @@ export function Eye({ cx, cy, pose, ctx, id }: { cx: number; cy: number; pose: M
                   stroke={C.outline}
                   strokeWidth={2.4}
                   vectorEffect="non-scaling-stroke"
-                  style={pivot(0, -13.5)}
+                  style={{ originY: 0 }}
                   initial={false}
                   animate={{ scaleY: lidAnim }}
                   transition={lidT}
@@ -179,7 +183,6 @@ export function Brow({ cx, pose, ctx }: { cx: number; pose: BrowPose; ctx: Ctx }
         stroke={C.brow}
         strokeWidth={3.4}
         strokeLinecap="round"
-        style={pivot(0, 0)}
         initial={false}
         animate={{ y: pose.dy, rotate: pose.rot }}
         transition={ctx.spring}
@@ -282,11 +285,12 @@ function Scanner({ ctx }: { ctx: Ctx }) {
         </linearGradient>
       </defs>
       <motion.g
-        style={pivot(0, 16)}
+        
         initial={false}
         animate={{ rotate: ctx.reduced ? 0 : [-16, 16, -16] }}
         transition={loopT(ctx, 2.2)}
       >
+<Pivot x={0} y={16} r={90} />
         <path d="M-5 16 L5 16 L20 52 L-20 52 Z" fill={`url(#${beam})`} />
         <path d="M-19 51 H19" style={{ stroke: ctx.accent2 }} strokeWidth={2.4} strokeLinecap="round" opacity={0.9} />
       </motion.g>
@@ -325,17 +329,23 @@ export function Arm({ side, pose, pass, ctx }: { side: 'L' | 'R'; pose: ArmPose;
   return (
     <g transform={`translate(${sx} ${sy})`}>
       <motion.g
-        style={pivot(0, 0)}
+        
         initial={false}
         animate={{ x: pose.ox ?? 0, y: pose.oy ?? 0, rotate: pose.s }}
         transition={ctx.spring}
       >
-        <motion.g style={pivot(0, 0)} initial={false} animate={{ rotate: loopAnim }} transition={loopTr}>
+<Pivot x={0} y={0} r={400} />
+        <motion.g  initial={false} animate={{ rotate: loopAnim }} transition={loopTr}>
+<Pivot x={0} y={0} r={360} />
           <rect {...UPPER} {...paint} />
-          <motion.g style={pivot(0, 14)} initial={false} animate={{ rotate: pose.e }} transition={ctx.spring}>
+          {/* shoulder blend: hides the arm's top outline so it grows out of the body */}
+          {pass === 'fill' && <circle cx={0} cy={-1} r={8.6} fill={C.body} />}
+          <motion.g  initial={false} animate={{ rotate: pose.e }} transition={ctx.spring}>
+<Pivot x={0} y={14} r={300} />
             <rect {...FORE} {...paint} />
             <g transform="translate(0 28)">
-              <motion.g style={pivot(0, 0)} initial={false} animate={{ rotate: h }} transition={ctx.spring}>
+              <motion.g  initial={false} animate={{ rotate: h }} transition={ctx.spring}>
+<Pivot x={0} y={0} r={200} />
                 <AnimatePresence initial={false}>
                   {showProp && (
                     <motion.g key={pose.hand} {...fade} transition={ctx.fadeT}>
@@ -390,7 +400,7 @@ function Sparkles({ ctx }: { ctx: Ctx }) {
         <g key={i} transform={`translate(${p.x} ${p.y}) scale(${p.s})`}>
           <motion.path
             d={SPARKLE}
-            style={{ fill: ctx.accent2, stroke: ctx.accentDark, ...pivot(0, 0) }}
+            style={{ fill: ctx.accent2, stroke: ctx.accentDark }}
             strokeWidth={1.4}
             strokeLinejoin="round"
             initial={false}
@@ -431,7 +441,6 @@ function Dots({ ctx }: { ctx: Ctx }) {
           cy={42}
           r={3.6}
           fill={C.ink}
-          style={pivot(x, 42)}
           initial={false}
           animate={ctx.reduced ? { opacity: 1, scale: 1 } : { opacity: [0.25, 1, 0.25], scale: [0.8, 1.15, 0.8] }}
           transition={ctx.reduced ? { duration: 0 } : { duration: 1.2, delay: i * 0.2, repeat: Infinity, ease: 'easeInOut' }}
@@ -453,11 +462,12 @@ function Zzz({ ctx }: { ctx: Ctx }) {
       {zs.map((z, i) => (
         <g key={i} transform={`translate(${z.x} ${z.y}) scale(${z.s})`}>
           <motion.g
-            style={pivot(0, 0)}
+            
             initial={false}
             animate={ctx.reduced ? { opacity: 1, x: 0, y: 0, scale: 1 } : { opacity: [0, 1, 1, 0], x: [0, 4, 10], y: [6, -6, -16], scale: [0.6, 1, 1.15] }}
             transition={ctx.reduced ? { duration: 0 } : { duration: 3.2, delay: z.d, repeat: Infinity, ease: 'easeOut' }}
           >
+<Pivot x={0} y={0} r={60} />
             <path d={Z_PATH} fill="none" stroke={C.ink} strokeWidth={5.5} strokeLinecap="round" strokeLinejoin="round" />
             <path d={Z_PATH} fill="none" stroke="#FFFFFF" strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round" />
           </motion.g>
@@ -471,11 +481,12 @@ function Question({ ctx }: { ctx: Ctx }) {
   return (
     <g transform="translate(164 40)">
       <motion.g
-        style={pivot(-10, 18)}
+        
         initial={false}
         animate={{ rotate: ctx.reduced ? 0 : [-6, 6, -6], y: ctx.reduced ? 0 : [0, -2, 0] }}
         transition={loopT(ctx, 2.4)}
       >
+<Pivot x={-10} y={18} r={60} />
         <path d="M-14 12 L-22 24 L-6 16 Z" fill={C.bubble} stroke={C.outline} strokeWidth={2.5} strokeLinejoin="round" />
         <circle r={18} fill={C.bubble} stroke={C.outline} strokeWidth={2.5} />
         <path d="M-6 9 L-11 15" stroke={C.bubble} strokeWidth={4} />
@@ -510,7 +521,7 @@ function Confetti({ ctx }: { ctx: Ctx }) {
         return (
           <motion.g
             key={i}
-            style={pivot(p.x, 0)}
+
             initial={false}
             animate={
               ctx.reduced

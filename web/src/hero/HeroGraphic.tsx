@@ -70,7 +70,7 @@ export function HeroGraphic({ animate }: { animate: boolean }) {
     { scope: root, dependencies: [animate], revertOnUpdate: true },
   )
 
-  const chanaSize = isMobile ? 92 : 128
+  const chanaSize = isMobile ? 104 : 150
 
   return (
     <div ref={root} className="hero-stage relative mx-auto w-full" data-phase={phase}>

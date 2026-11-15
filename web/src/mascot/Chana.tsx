@@ -1,7 +1,7 @@
 import { useId, type JSX } from 'react'
 import { AnimatePresence, motion, useReducedMotion, type Transition } from 'motion/react'
 import { POSES, type ChanaMood } from './moods.ts'
-import { AttachedProp, Arm, Body, Brow, C, Eye, FloatProp, Mouth, pivot, type Ctx } from './parts.tsx'
+import { AttachedProp, Arm, Body, Brow, C, Eye, FloatProp, Mouth, Pivot, type Ctx } from './parts.tsx'
 
 export interface ChanaProps {
   mood: ChanaMood
@@ -69,8 +69,10 @@ export function Chana({ mood, size = 160, className, accent = 'var(--accent-1, #
     >
       {/* ground shadow */}
       <ellipse cx={100} cy={187} rx={46} ry={6} fill="#000000" opacity={0.16} />
-      <motion.g style={pivot(100, 184)} initial={false} animate={{ rotate: pose.lean }} transition={ctx.spring}>
-        <motion.g style={pivot(100, 184)} initial={false} animate={loopAnim} transition={loopT}>
+      <motion.g initial={false} animate={{ rotate: pose.lean }} transition={ctx.spring}>
+<Pivot x={100} y={184} r={900} />
+        <motion.g initial={false} animate={loopAnim} transition={loopT}>
+<Pivot x={100} y={184} r={800} />
           <Body ctx={ctx} />
           <motion.g initial={false} animate={{ opacity: pose.blush }} transition={ctx.fadeT}>
             <ellipse cx={63} cy={131} rx={8.5} ry={5} fill={C.blush} />
