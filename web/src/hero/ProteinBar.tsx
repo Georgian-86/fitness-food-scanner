@@ -5,17 +5,15 @@ export const BARCODE_BOX = { x: 150, y: 34, w: 118, h: 62, vw: 300, vh: 130 }
 
 const BARS = [3, 1, 2, 1, 1, 3, 1, 2, 2, 1, 1, 2, 3, 1, 1, 2, 1, 3, 2, 1, 1, 1, 2, 3, 1, 2, 1, 1, 3, 1, 2, 1]
 
+const BAR_UNIT = 98 / (BARS.reduce((a, b) => a + b, 0) + BARS.length)
+const BAR_RECTS = BARS.map((w, i) => ({
+  x: 160 + (BARS.slice(0, i).reduce((a, b) => a + b, 0) + i) * BAR_UNIT,
+  w: w * BAR_UNIT,
+  h: i % 15 === 0 ? 44 : 38,
+}))
+
 function Barcode() {
-  const x0 = 160
-  const width = 98
-  const units = BARS.reduce((a, b) => a + b, 0) + BARS.length
-  const u = width / units
-  let x = x0
-  const rects = BARS.map((w, i) => {
-    const r = <rect key={i} x={x} y={42} width={w * u} height={i % 15 === 0 ? 44 : 38} fill="#141414" />
-    x += (w + 1) * u
-    return r
-  })
+  const rects = BAR_RECTS.map((r, i) => <rect key={i} x={r.x} y={42} width={r.w} height={r.h} fill="#141414" />)
   return (
     <g>
       {rects}
