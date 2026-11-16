@@ -77,8 +77,8 @@ import { Chana, CHANA_MOODS, type ChanaMood } from './mascot'
 ## Animation rules
 
 - **Channels, not keyframes on elements.** Every moving number (body lift, lean, squash, gaze, lids, brows, shoulders, elbows, hands, scanner beam) is one Motion value, driven by `useMoodMotion.ts`. React re-renders never restart an animation.
-- **Blend, never jump.** On a mood change each channel springs from its current value to the new pose. A looping channel springs to its loop's first frame, and then all loops of that mood start together on the same frame, so the hop and its squash stay in phase. Switching mid-hop flows straight into the new pose (measured: no frame-to-frame jump beyond the hop's own speed; the old build jumped up to about 30 px at 240 px size).
-- **One easing family.** Poses use one spring (stiffness 260, damping 22). Loops are 1.6–3 s sine-like ease-in-out keyframes. Follow-through uses one softer spring (stiffness 150, damping 12).
+- **Blend, never jump.** On a mood change each channel springs from its current value to the new pose. A looping channel springs to its loop's first frame, and then all loops of that mood start together on the same frame, so the hop and its squash stay in phase. Switching mid-hop flows straight into the new pose (measured at 240 px: no frame-to-frame jump beyond the hop's own speed; the old build jumped about 21 px in one frame).
+- **One easing family.** Poses use one spring (stiffness 260, damping 22). Body loops are 1.6–3 s sine-like ease-in-out keyframes; blinks repeat every 3–5 s and the small prop loops (dots, sparkles) run 1.2–2.4 s. Follow-through uses one softer spring (stiffness 150, damping 12).
 - **Squash and stretch** on the happy hop: anticipation squash, take-off stretch, hang, fall, landing squash, small rebound, rest. The pivot is at the feet.
 - **Overlapping action:** the band tails and the arms are not keyframed for it; they lag behind the body's own velocity through the follow-through spring.
 - **Cheap to run:** transform and opacity only, no filter or layout animation; the whole body is one transformed group; expressions and props cross-fade in 200 ms.
