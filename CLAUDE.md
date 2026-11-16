@@ -17,8 +17,11 @@ The main session plans and reviews; subagents write the code. The owner asked fo
 - Review what comes back, run the checks yourself, then commit. Subagents do not commit.
 - Small edits (a typo, a one-line fix, a doc tweak) are done directly; delegating them costs more than it saves.
 
-## Marketing site and hero section
+## Marketing site
 
-- No web app exists yet. When one is scaffolded, add the React Bits registry to its `components.json` so the shadcn MCP server in `.mcp.json` can find the components: `"registries": { "@react-bits": "https://reactbits.dev/r/{name}.json" }`.
-- Take React Bits components from the registry, not from memory.
-- Hero video: no real brand packaging and no text baked into the video (headline and verdict labels are HTML on top). Ship it muted, looping, with a poster image and a `prefers-reduced-motion` fallback.
+- The landing page lives in `web/` (Vite + React + TypeScript, Tailwind, GSAP ScrollTrigger + Lenis, Motion). Brand rules, palettes and trust rules are in `docs/brand.md`; the mascot is documented in `docs/mascot.md`.
+- Palette: one line in `web/src/palette.ts` (`DEFAULT_PALETTE`), overridable with `?palette=`. `?clean=1` hides the preview palette switcher; `?view=mascot` shows the mascot gallery.
+- Never invent social proof (user counts, ratings, testimonials, logos). Pricing in `web/src/content/pricing.ts` is a draft.
+- Signups post to `VITE_SIGNUP_ENDPOINT`; until it is set the form says signups aren't live.
+- Scroll animation: transform and opacity only, no React state per frame, one journey timeline that ends at max scroll.
+- When adding React Bits components, add the registry to a `components.json` first so the shadcn MCP server in `.mcp.json` can find them: `"registries": { "@react-bits": "https://reactbits.dev/r/{name}.json" }`.
