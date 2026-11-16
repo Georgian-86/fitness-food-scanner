@@ -1,7 +1,7 @@
 // Brand palettes from docs/brand.md (v1, neobrutalist). Preview branches change only the next line.
 export type PaletteName = 'bubblegum' | 'cobalt-punch' | 'night-shift' | 'ube-chai' | 'ink-lilac'
 
-export const DEFAULT_PALETTE: PaletteName = 'bubblegum';
+export const DEFAULT_PALETTE: PaletteName = 'night-shift';
 
 export type PaletteTokens = {
   label: string
