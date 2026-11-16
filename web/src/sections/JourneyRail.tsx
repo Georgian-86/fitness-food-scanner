@@ -3,7 +3,7 @@ import type { ChanaMood } from '../mascot'
 import { StoreChana } from '../components/StoreChana.tsx'
 import { VerdictChip } from '../content/verdicts.tsx'
 import { gsap, scrollProgress, useGSAP } from '../motion/engine.ts'
-import { MOTION_OK } from '../motion/media.ts'
+import { MOTION_OK, RAIL_OK, useMediaQuery } from '../motion/media.ts'
 import { createStore } from '../motion/store.ts'
 import { ctaMood } from './FinalCta.tsx'
 
@@ -23,6 +23,7 @@ function moodFor(p: number): ChanaMood {
  */
 export function JourneyRail() {
   const root = useRef<HTMLDivElement>(null)
+  const railShown = useMediaQuery(RAIL_OK)
 
   useGSAP(
     () => {
@@ -74,7 +75,7 @@ export function JourneyRail() {
       <span className="rail-done js-rail-done">
         <VerdictChip verdict="green" />
       </span>
-      <StoreChana store={railMood} size={56} />
+      {railShown && <StoreChana store={railMood} size={56} />}
     </div>
   )
 }

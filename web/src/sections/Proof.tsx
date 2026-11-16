@@ -8,7 +8,7 @@ import { StoreChana } from '../components/StoreChana.tsx'
 import { VerdictCard } from '../components/VerdictCard.tsx'
 import { DEMO_BAR } from '../content/demo.ts'
 import { gsap, useGSAP } from '../motion/engine.ts'
-import { PIN_OK, STACK_MOTION } from '../motion/media.ts'
+import { PIN_OK, STACK_MOTION, useMediaQuery } from '../motion/media.ts'
 import { createStore } from '../motion/store.ts'
 
 const STEPS = [
@@ -59,6 +59,8 @@ function ValueCard({ className = '' }: { className?: string }) {
 
 export function Proof() {
   const root = useRef<HTMLElement>(null)
+  // Only the visible variant mounts its Chanas, so hidden mascots don't run animation loops.
+  const pinned = useMediaQuery(PIN_OK)
 
   useGSAP(
     () => {
@@ -189,7 +191,7 @@ export function Proof() {
             </Phone>
             <ValueCard className="stage-value js-value" />
             <div className="stage-chana">
-              <StoreChana store={stageMood} size={150} />
+              {pinned && <StoreChana store={stageMood} size={150} />}
             </div>
             </div>
           </div>
@@ -210,7 +212,7 @@ export function Proof() {
               <GoalToggle goal="cut" />
               <VerdictCard verdict="orange" goalLabel="Fat loss" reason={DEMO_BAR.cut.reason} />
             </div>
-            <Chana mood="caution" size={84} className="pstep-chana" />
+            {!pinned && <Chana mood="caution" size={84} className="pstep-chana" />}
           </li>
           <li className="pstep card js-pstep">
             <StepHead i={2} />
@@ -218,7 +220,7 @@ export function Proof() {
               <GoalToggle goal="bulk" />
               <VerdictCard className="js-card-green" verdict="green" goalLabel="Muscle gain" reason={DEMO_BAR.bulk.reason} />
             </div>
-            <Chana mood="happy" size={84} className="pstep-chana" />
+            {!pinned && <Chana mood="happy" size={84} className="pstep-chana" />}
           </li>
           <li className="pstep card js-pstep">
             <StepHead i={3} />

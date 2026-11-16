@@ -6,6 +6,7 @@ type Mark = 'yes' | 'no' | 'some'
 type Cell = { mark: Mark; text: string }
 
 const COLS = ['Same-score-for-everyone scanners', 'Calorie trackers', 'chana.'] as const
+const SHORT = ['Scanners', 'Trackers', 'chana.'] as const
 
 // Category comparison only, per the trust rules in docs/brand.md: no named competitors.
 const ROWS: { label: string; cells: [Cell, Cell, Cell] }[] = [
@@ -63,7 +64,7 @@ export function Compare() {
                 <tr key={r.label}>
                   <th scope="row">{r.label}</th>
                   {r.cells.map((c, i) => (
-                    <td key={i} className={i === 2 ? 'cmp-us' : ''} data-col={COLS[i]}>
+                    <td key={i} className={i === 2 ? 'cmp-us' : ''} data-col={SHORT[i]}>
                       <span className="cmp-cell">
                         <MarkIcon mark={c.mark} />
                         <span>{c.text}</span>
