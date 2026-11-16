@@ -1,7 +1,16 @@
 import { useRef } from 'react'
 import { PaletteSwitcher } from './components/PaletteSwitcher.tsx'
 import { useScrollEngine } from './motion/engine.ts'
+import { Colours } from './sections/Colours.tsx'
+import { Compare } from './sections/Compare.tsx'
+import { Faq } from './sections/Faq.tsx'
+import { FinalCta, Footer } from './sections/FinalCta.tsx'
+import { Gamified } from './sections/Gamified.tsx'
 import { Hero } from './sections/Hero.tsx'
+import { HowItWorks } from './sections/HowItWorks.tsx'
+import { Pricing } from './sections/Pricing.tsx'
+import { Problem } from './sections/Problem.tsx'
+import { Trust } from './sections/Trust.tsx'
 import { JourneyRail } from './sections/JourneyRail.tsx'
 import { Nav } from './sections/Nav.tsx'
 import { Proof } from './sections/Proof.tsx'
@@ -20,10 +29,17 @@ export default function App() {
         <Hero />
         <Ticker />
         <Proof />
-        <div className="checkpoint-end wrap">
-          <p className="mono">Checkpoint build · sections 4–12 come next</p>
-        </div>
+        <Problem />
+        <HowItWorks />
+        <Colours />
+        <Compare />
+        <Trust />
+        <Gamified />
+        <Pricing />
+        <Faq />
+        <FinalCta />
       </main>
+      <Footer />
       <JourneyRail />
       <PaletteSwitcher />
     </div>

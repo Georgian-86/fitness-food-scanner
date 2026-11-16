@@ -5,6 +5,7 @@ import { VerdictChip } from '../content/verdicts.tsx'
 import { gsap, scrollProgress, useGSAP } from '../motion/engine.ts'
 import { MOTION_OK } from '../motion/media.ts'
 import { createStore } from '../motion/store.ts'
+import { ctaMood } from './FinalCta.tsx'
 
 const railMood = createStore<ChanaMood>('idle')
 
@@ -37,7 +38,10 @@ export function JourneyRail() {
             end: 'max',
             scrub: true,
             refreshPriority: -10,
-            onUpdate: (self) => railMood.set(moodFor(self.progress)),
+            onUpdate: (self) => {
+              railMood.set(moodFor(self.progress))
+              ctaMood.set(self.progress >= 0.985 ? 'celebrate' : 'happy')
+            },
           },
         })
         tl.fromTo('.js-rail-fill', { scaleY: 0 }, { scaleY: 1, duration: 1 }, 0)
