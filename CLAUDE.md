@@ -7,3 +7,4 @@
 - **Data:** Open Food Facts API first; OCR of the nutrition label when the barcode isn't found. Indian coverage is thin, so every miss should become a saved product.
 - **Wording:** never call a product "dangerous". Red = "avoid for you". Make no medical claims.
 - **MVP scope:** fat-loss and muscle-gain goals only, Android first (Android is about 72% of India's fitness-app market).
+- **Status:** MVP prototype PWA built in `app/` (scoring core, data layer, scanner, pages, e2e smoke test). Thresholds await dietitian review; OCR and the Capacitor APK come later.
