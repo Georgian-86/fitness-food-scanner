@@ -38,9 +38,18 @@ export function PaletteSwitcher() {
           })}
         </fieldset>
       )}
-      <button type="button" className="pal-btn" aria-expanded={open} aria-controls={`${uid}-panel`} onClick={() => setOpen((o) => !o)}>
+      <button
+        type="button"
+        className="pal-btn"
+        aria-label="Preview palette"
+        aria-expanded={open}
+        aria-controls={`${uid}-panel`}
+        onClick={() => setOpen((o) => !o)}
+      >
         <span className="pal-dot" aria-hidden="true" />
-        Palette <span className="pal-note">preview</span>
+        <span className="pal-text" aria-hidden="true">
+          <span className="pal-note">Preview</span> palette
+        </span>
       </button>
     </div>
   )

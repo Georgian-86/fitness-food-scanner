@@ -44,7 +44,7 @@ export function JourneyRail() {
           .fromTo('.js-rail-runner', { yPercent: 0 }, { yPercent: 100, duration: 1 }, 0)
           .fromTo(document.querySelectorAll('.js-journey-bar'), { scaleX: 0 }, { scaleX: 1, duration: 1 }, 0)
           .fromTo('.js-rail-tag', { rotate: -8 }, { rotate: 8, duration: 1 }, 0)
-          .fromTo('.js-rail-done', { opacity: 0, x: 16 }, { opacity: 1, x: 0, duration: 0.03 }, 0.97)
+          .fromTo('.js-rail-done', { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.03 }, 0.97)
         window.__journeyProgress = () => tl.scrollTrigger?.progress ?? scrollProgress()
         return () => {
           window.__journeyProgress = scrollProgress
@@ -67,12 +67,10 @@ export function JourneyRail() {
           </span>
         </span>
       </div>
-      <div className="rail-end">
-        <span className="rail-done js-rail-done">
-          <VerdictChip verdict="green" />
-        </span>
-        <StoreChana store={railMood} size={64} />
-      </div>
+      <span className="rail-done js-rail-done">
+        <VerdictChip verdict="green" />
+      </span>
+      <StoreChana store={railMood} size={56} />
     </div>
   )
 }

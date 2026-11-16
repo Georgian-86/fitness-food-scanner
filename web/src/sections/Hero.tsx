@@ -2,6 +2,7 @@ import { useRef } from 'react'
 import { SafeChana as Chana } from '../components/SafeChana.tsx'
 import { GoalToggle } from '../components/GoalToggle.tsx'
 import { Phone } from '../components/Phone.tsx'
+import { ProteinBar } from '../components/ProteinBar.tsx'
 import { ScanTile } from '../components/ScanTile.tsx'
 import { SignupForm } from '../components/SignupForm.tsx'
 import { VerdictCard } from '../components/VerdictCard.tsx'
@@ -62,6 +63,23 @@ export function Hero() {
               Scan any packaged food and see if it fits <strong>your</strong> goal, cutting or bulking, in about a second. One colour, one
               reason, no label maths.
             </p>
+            {/* Narrow screens: the claim made visible before the form (desktop shows the phone). */}
+            <div className="hero-mini card" role="group" aria-label="Example: the same protein bar, two goals">
+              <div className="hero-mini-top">
+                <ProteinBar className="hero-mini-bar" />
+                <span className="hero-mini-name">
+                  Protein bar <span className="mono">60 g · ₹60</span>
+                </span>
+              </div>
+              <div className="hero-mini-row">
+                <span className="hero-mini-goal mono">Cutting</span>
+                <VerdictChip verdict="orange" />
+              </div>
+              <div className="hero-mini-row">
+                <span className="hero-mini-goal mono">Bulking</span>
+                <VerdictChip verdict="green" />
+              </div>
+            </div>
             <SignupForm source="hero" id="signup" className="hero-form" />
             <ul className="trust" aria-label="Our promises">
               {TRUST.map((t) => (

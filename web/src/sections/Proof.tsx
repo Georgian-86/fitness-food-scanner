@@ -8,7 +8,7 @@ import { StoreChana } from '../components/StoreChana.tsx'
 import { VerdictCard } from '../components/VerdictCard.tsx'
 import { DEMO_BAR } from '../content/demo.ts'
 import { gsap, useGSAP } from '../motion/engine.ts'
-import { PIN_OK } from '../motion/media.ts'
+import { PIN_OK, STACK_MOTION } from '../motion/media.ts'
 import { createStore } from '../motion/store.ts'
 
 const STEPS = [
@@ -126,7 +126,7 @@ export function Proof() {
       })
 
       // Mobile and tablet: no long pin, short scrubbed reveals per step.
-      mm.add('(max-width: 1023px) and (prefers-reduced-motion: no-preference)', () => {
+      mm.add(STACK_MOTION, () => {
         gsap.utils.toArray<HTMLElement>('.js-pstep').forEach((card) => {
           gsap.from(card, { y: 48, opacity: 0, ease: 'none', scrollTrigger: { trigger: card, start: 'top 94%', end: 'top 66%', scrub: true } })
           const st = { trigger: card, start: 'top 78%', end: 'top 42%', scrub: true }
