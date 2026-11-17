@@ -159,7 +159,7 @@ Use only the colours named above. No yellow, no red, no orange, no green, no lim
 This is the "negative prompt": Gemini has no negative field, so it goes in as plain sentences.
 
 ```text
-No dialogue. No music. No sound effects. Completely silent. No text, letters, numbers, logos or labels appear at any time. Do not add any new object or character. No camera movement, no zoom, no cuts. No 3D, no depth of field, no motion blur, no gradients, no glow, no soft shadows, no photorealism, no clay or plastic look. Orange and green appear only on the phone's panel. No yellow, red, lime or mint anywhere.
+No dialogue. No music. No sound effects. Completely silent. No text, letters, numbers, logos or labels appear at any time. Do not add any new object or character. No camera movement, no zoom, no cuts. No 3D, no depth of field, no motion blur, no gradients, no glow, no soft shadows, no photorealism, no clay or plastic look. Orange and green appear only on the phone's panel. No yellow, red, lime or mint anywhere. Chana never eats, chews, drinks, licks or blows anything: no gum, no bubbles, no balloons, no candy, nothing in the mouth. Nothing bursts, pops, splashes or explodes: no liquid, goo, slime, paint or splatter, and no confetti. Chana's face and body stay clean and unchanged; the only expressions are a side-eye and a happy smile. Follow the timed beats exactly; do not invent extra actions or jokes.
 ```
 
 ### Desktop hero, 16:9
