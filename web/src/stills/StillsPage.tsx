@@ -176,8 +176,8 @@ export default function StillsPage() {
     >
       <style>{`.still-bar{display:block;width:100%;height:auto;overflow:visible}`}</style>
       {format === 'chana' && (
-        <Abs style={{ left: (w - 1670) / 2, top: (h - 1670) / 2 + 20 }}>
-          <Chana mood="idle" size={1670} accent="var(--accent-1)" />
+        <Abs style={{ left: 75, top: -94 }}>
+          <Chana mood="idle" size={1845} accent="var(--accent-1)" />
         </Abs>
       )}
       {format === 'mood' && (
