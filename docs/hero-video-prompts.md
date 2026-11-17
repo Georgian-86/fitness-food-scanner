@@ -1,5 +1,7 @@
 # Hero motion video prompts (Google Gemini)
 
+> **Want the finished prompts?** Copy them from `docs/gemini-paste-prompts.md`. This file explains why they are written that way, plus export steps.
+
 Prompts and a full pipeline for the landing page's looping, silent hero clip, in the v1 neobrutalist brand (`docs/brand.md`, `docs/mascot.md`). Default palette: `bubblegum`. Checked against Google's own pages on 17 Nov 2026 (sources at the end).
 
 ## Two things that changed since this was asked for
